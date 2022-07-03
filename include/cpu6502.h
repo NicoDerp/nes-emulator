@@ -69,7 +69,7 @@ private:
     ***/
 
     uint8_t IMP(); // Implicit
-    uint8_t XXx(); // Accumulator
+    uint8_t ACC(); // Accumulator
     uint8_t IMM(); // Immediate
     uint8_t REL(); // Relative
     uint8_t IND(); // Indirect
@@ -85,6 +85,7 @@ private:
     uint8_t IZX(); // Indexed indirect offset x
     uint8_t IZY(); // Indexed indirect offset y
 
+
     /** Opcodes
      *
      * (https://www.nesdev.org/wiki/CPU_unofficial_opcodes)
@@ -94,6 +95,7 @@ private:
      * Those are captured in XXX.
      *
     ***/
+
     uint8_t ADC(); 	uint8_t AND(); 	uint8_t ASL(); 	uint8_t BCC(); 	uint8_t BCS(); 	uint8_t BEQ(); 	uint8_t BIT(); 	uint8_t BMI(); 	uint8_t BNE(); 	uint8_t BPL(); 	uint8_t BRK(); 	uint8_t BVC(); 	uint8_t BVS(); 	CLC
     uint8_t CLD(); 	uint8_t CLI(); 	uint8_t CLV(); 	uint8_t CMP(); 	uint8_t CPX(); 	uint8_t CPY(); 	uint8_t DEC(); 	uint8_t DEX(); 	uint8_t DEY(); 	uint8_t EOR(); 	uint8_t INC(); 	uint8_t INX(); 	uint8_t INY(); 	JMP
     uint8_t JSR(); 	uint8_t LDA(); 	uint8_t LDX(); 	uint8_t LDY(); 	uint8_t LSR(); 	uint8_t NOP(); 	uint8_t ORA(); 	uint8_t PHA(); 	uint8_t PHP(); 	uint8_t PLA(); 	uint8_t PLP(); 	uint8_t ROL(); 	uint8_t ROR(); 	RTI
