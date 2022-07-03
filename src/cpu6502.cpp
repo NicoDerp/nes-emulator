@@ -95,9 +95,174 @@ void cpu6502::clock()
 
 uint8_t cpu6502::fetch()
 {
-    fetched = read(pc);
-    pc++;
+    if (lookup[opcode].addrmode != &cpu6502::IMP ||
+        lookup[opcode].addrmode != &cpu6502::ACC)
+        fetched = read(fetch_addr);
 
     return fetched;
 }
+
+uint8_t cpu6502::IMP()
+{
+    return 0;
+}
+
+uint8_t cpu6502::ACC()
+{
+    fetched = a;
+
+    return 0;
+}
+
+uint8_t cpu6502::IMM()
+{
+    pc++;
+    addr_abs = pc;
+    pc++;
+
+    return 0;
+}
+
+uint8_t cpu6502::REL()
+{
+    addr_rel = read(pc);
+    pc++;
+    if (addr_rel & 0x80) // If it is signed
+        addr_rel |= 0xFF00; // ???
+
+    return 0;
+}
+
+uint8_t cpu6502::IND()
+{
+    uint16_t ptr_low = read(pc);
+    pc++;
+    uint16_t ptr_high = read(pc);
+    pc++;
+
+    uint16_t ptr = (ptr_high << 8) | ptr_low;
+
+    // To simulate a bug in the nes.
+    // (https://www.nesdev.org/6502bugs.txt)
+    if (ptr_low == 0x00FF)
+    {
+        // Simulate bug by clearing low bytes in high bytes
+        addr_abs = (read(ptr & 0xFF00) << 8) | (read(ptr));
+    }
+    else
+    {
+        // Normally
+        addr_abs = (read(ptr+1) << 8) & (read(ptr));
+    }
+
+    return 0;
+}
+
+uint8_t cpu6502::ABS()
+{
+    uint16_t low = read(pc);
+    pc++;
+    uint16_t high = read(pc);
+    pc++;
+
+    addr_abs = (high << 8) | low;
+
+    return 0;
+}
+
+uint8_t cpu6502::ABX()
+{
+    uint16_t low = read(pc);
+    pc++;
+    uint16_t high = read(pc);
+    pc++;
+
+    addr_abs = (high << 8) | low;
+    addr_abs += x;
+
+    // Page has overflowed, requiring an extra cycle
+    if ((addr_abs & 0xFF00) != (high << 8))
+        return 1;
+    return 0;
+}
+
+uint8_t cpu6502::ABY()
+{
+    uint16_t low = read(pc);
+    pc++;
+    uint16_t high = read(pc);
+    pc++;
+
+    addr_abs = (high << 8) | low;
+    addr_abs += y;
+
+    // Page has overflowed, requiring an extra cycle
+    if ((addr_abs & 0xFF00) != (high << 8))
+        return 1;
+    return 0;
+
+}
+
+uint8_t cpu6502::ZP0()
+{
+    addr_abs = read(pc);
+    pc++;
+
+    // addr_abs &= 0x00FF ??? unnecessary
+
+    return 0;
+}
+
+uint8_t cpu6502::ZPX()
+{
+    addr_abs = read(pc);
+    pc++;
+
+    addr_abs += x;
+    addr_abs &= 0x00FF; // So it wraps around incase of overflow
+
+    return 0;
+}
+
+uint8_t cpu6502::ZPY()
+{
+    addr_abs = read(pc);
+    pc++;
+
+    addr_abs += y;
+    addr_abs &= 0x00FF; // So it wraps around incase of overflow
+
+    return 0;
+}
+
+uint8_t cpu6502::IZX()
+{
+    uint16_t offset = read(pc);
+    pc++;
+
+    uint16_t low = read((uint16_t)(offset+(uint16_t)x)&0x00FF);
+    uint16_t high = read((uint16_t)(offset+(uint16_t)x+1)&0x00FF);
+    addr_abs = (high << 8) | low;
+
+    return 0;
+}
+
+uint8_t cpu6502::IZY()
+{
+    uint16_t offset = read(pc);
+    pc++;
+
+    uint16_t low = read(offset);
+    uint16_t high = read(offset+1);
+
+    addr_abs = (high << 8) | low;
+    addr_abs += y;
+
+    // Different high bytes after addition means overflow
+    // Therefore an extra cycle is needed
+    if ((addr_abs & 0xFF00) != (high << 8))
+        return 1;
+    return 0;
+}
+
 

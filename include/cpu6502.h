@@ -34,8 +34,10 @@ public:
     uint8_t status = 0x00; // Status register (the flags)
 
     uint8_t cycles = 0x00; // Cycles left for operation
-    uint8_t fetched = 0x00; // The fetched data
     uint8_t opcode = 0x00; // Current opcode
+
+    uint8_t fetch_addr = 0x0000; // Address to fetch data from
+    uint8_t fetched = 0x00; // The fetched data
 
 private:
 	Bus *bus = nullptr;
