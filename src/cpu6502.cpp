@@ -80,10 +80,10 @@ void cpu6502::push(uint8_t val)
     stackptr--;
 }
 
-uint8_t cpou6502::pop()
+uint8_t cpu6502::pop()
 {
     stackptr++;
-    return read(stacptr+0x0100);
+    return read(stackptr+0x0100);
 }
 
 void cpu6502::clock()
@@ -279,7 +279,10 @@ uint8_t cpu6502::IZY()
 
 // Operations
 
-uint8_t cpu6502::ADC();
+uint8_t cpu6502::ADC()
+{
+    return 0;
+}
 
 uint8_t cpu6502::AND()
 {
@@ -599,7 +602,7 @@ uint8_t cpu6502::LSR()
     setFlag(N, 0);
     setFlag(Z, tmp==0);
     setFlag(C, fetched&0x01);
-    if (lookup[opcode].addr_mode == &cpu6502::ACC)
+    if (lookup[opcode].addrmode == &cpu6502::ACC)
         a = tmp;
     else
         write(addr_abs, tmp);
@@ -703,7 +706,7 @@ uint8_t cpu6502::ROL()
     setFlag(N, fetched&0x40);
     setFlag(Z, tmp==0);
     setFlag(C, fetched&0x80);
-    if (lookup[opcode].addr_mode == &cpu6502::ACC)
+    if (lookup[opcode].addrmode == &cpu6502::ACC)
         a = tmp;
     else
         write(addr_abs, tmp);
@@ -718,7 +721,7 @@ uint8_t cpu6502::ROR()
     setFlag(N, getFlag(C));
     setFlag(Z, tmp==0);
     setFlag(C, fetched&0x01);
-    if (lookup[opcode].addr_mode == &cpu6502::ACC)
+    if (lookup[opcode].addrmode == &cpu6502::ACC)
         a = tmp;
     else
         write(addr_abs, tmp);
@@ -743,7 +746,7 @@ uint8_t cpu6502::RTS()
 
 uint8_t cpu6502::SBC()
 {
-
+    return 0;
 }
 
 uint8_t cpu6502::SEC()
@@ -810,7 +813,7 @@ uint8_t cpu6502::TXA()
 {
     a = x;
     setFlag(N, a&0x80);
-    setFlalg(Z, a==0);
+    setFlag(Z, a==0);
     return 0;
 }
 

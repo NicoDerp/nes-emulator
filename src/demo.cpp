@@ -1,16 +1,39 @@
+#define OLC_PGE_APPLICATION
+//#include <iostream>
+#include "olcPixelGameEngine.h"
+//#include "bus.h"
 
-#include <iostream>
-#include "bus.h"
+class Emulator : public olc::PixelGameEngine
+{
+public:
+    Emulator()
+    {
+        sAppName = "NES Emulator";
+    }
 
+public:
+    bool OnUserCreate() override
+    {
+        return true;
+    }
+
+    bool OnUserUpdate(float fElapsedTime) override
+    {
+        return true;
+    }
+
+//private:
+//    Bus nes;
+};
 
 int main()
 {
-    printf("Hello world!\n");
+    //printf("Starting emulator...\n");
 
-    Bus nes;
 
-    unsigned int val = nes.read(0x0000);
-    printf("Value: %d\n", val);
+    Emulator emu;
+    if (emu.Construct(640, 480, 2, 2))
+        emu.Start();
 
     return 0;
 }
