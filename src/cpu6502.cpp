@@ -1,7 +1,6 @@
 #include "cpu6502.h"
 #include "bus.h"
 
-
 cpu6502::cpu6502()
 {
     /** Very ugly lookup table
@@ -86,6 +85,11 @@ uint8_t cpu6502::pop()
     return read(stackptr+0x0100);
 }
 
+std::string cpu6502::getInsName()
+{
+    return lookup[opcode].name;
+}
+
 void cpu6502::clock()
 {
     // No more cycles left for operation so fetch next one
@@ -97,19 +101,96 @@ void cpu6502::clock()
 
         cycles = lookup[opcode].cycles;
 
-        if ((this->*lookup[opcode].addrmode)() && (this->*lookup[opcode].operation)())
-            cycles += 1;
+        printf("Emulating '%s' [%d]\n", lookup[opcode].name.c_str(), opcode);
+        printf("Cycles %d\n", cycles);
+
+        bool c1 = (this->*lookup[opcode].addrmode)();
+
+        bool c2 = (this->*lookup[opcode].operation)();
+
+        if (c1&&c2)
+            cycles++;
+
+        setFlag(U, 1);
     }
 
     // One cycle has passed
     cycles--;
+    clockCount++;
+}
+
+void cpu6502::reset()
+{
+    a = 0;
+    x = 0;
+    y = 0;
+    stackptr = 0xFD;
+    status = 0x00 | U; // Everything is zero exept for the unused bit
+
+    // Read where the program starts
+    uint8_t low = read(0xFFFC);
+    uint8_t high = read(0xFFFD);
+
+    pc = (high << 8) | low;
+
+    addr_rel = 0x0000;
+    addr_abs = 0x0000;
+    fetched = 0x00;
+
+    cycles = 8;
+}
+
+void cpu6502::nmi()
+{
+    push((pc>>8)&0x00FF); // Push high byte
+    push(pc&0x00FF); // Push low byte
+
+    setFlag(B, 0);
+    setFlag(U, 1);
+    setFlag(I, 1);
+
+    push(status); // Push status register
+
+    // Read new program counter
+    uint8_t low = read(0xFFFA);
+    uint8_t high = read(0xFFFB);
+
+    pc = (high << 8) | low;
+
+    cycles = 8;
+
+}
+
+void cpu6502::irq()
+{
+    if (!getFlag(I))
+    {
+        push((pc>>8)&0x00FF); // Push high byte
+        push(pc&0x00FF); // Push low byte
+
+        setFlag(B, 0);
+        setFlag(U, 1);
+        setFlag(I, 1);
+
+        push(status); // Push status register
+
+        // Read new program counter
+        uint8_t low = read(0xFFFE);
+        uint8_t high = read(0xFFFF);
+
+        pc = (high << 8) | low;
+
+        cycles = 7;
+    }
 }
 
 uint8_t cpu6502::fetch()
 {
     if (lookup[opcode].addrmode != &cpu6502::IMP ||
         lookup[opcode].addrmode != &cpu6502::ACC)
+    {
         fetched = read(addr_abs);
+    }
 
     return fetched;
 }
@@ -734,13 +815,17 @@ uint8_t cpu6502::RTI()
     setFlag(B, 0);
     setFlag(U, 0);
 
-    pc = (pop() << 8) | pop();
+    uint8_t low = pop();
+    uint8_t high = pop();
+    pc = (high << 8) | low;
     return 0;
 }
 
 uint8_t cpu6502::RTS()
 {
-    pc = (pop() << 8) | pop();
+    uint8_t low = pop();
+    uint8_t high = pop();
+    pc = (high << 8) | low;
     return 0;
 }
 

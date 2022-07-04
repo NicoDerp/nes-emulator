@@ -18,9 +18,17 @@ public:
 
     void connectBus(class Bus *n) { bus = n; };
 
+    void clock();
+    void reset();
+    void nmi();
+    void irq();
+
+    std::string getInsName();
+    bool complete() { return cycles == 0; }
+
 public:
-	enum FLAGS6502
-	{
+    enum FLAGS6502
+    {
         C = (1 << 0), // Carry flag
         Z = (1 << 1), // Zero flag
 	    I = (1 << 2), // Interrupt disable flag
@@ -29,7 +37,10 @@ public:
         U = (1 << 5), // Unused
         V = (1 << 6), // Overflow flag
         N = (1 << 7)  // Negative flag
-	};
+    };
+
+    bool getFlag(FLAGS6502 flag);
+    void setFlag(FLAGS6502 flag, bool value);
 
     uint8_t a = 0x00; // Accumulator register
     uint8_t x = 0x00; // X register
@@ -42,9 +53,11 @@ public:
     uint8_t cycles = 0x00; // Cycles left for operation
     uint8_t opcode = 0x00; // Current opcode
 
+    uint32_t clockCount = 0;
+
     uint8_t fetched = 0x00; // The fetched data
-    uint8_t addr_abs = 0x0000; // Address computed by the addres mode for operand to use
-    uint8_t addr_rel = 0x0000; // Address computed by the addres mode for operand to use
+    uint16_t addr_abs = 0x0000; // Address computed by the addres mode for operand to use
+    uint16_t addr_rel = 0x0000; // Address computed by the addres mode for operand to use
 
 private:
 	Bus *bus = nullptr;
@@ -52,13 +65,10 @@ private:
 	uint8_t read(uint16_t addr);
 	void write(uint16_t addr, uint8_t data);
 
-    bool getFlag(FLAGS6502 flag);
-    void setFlag(FLAGS6502 flag, bool value);
 
     void push(uint8_t val);
     uint8_t pop();
 
-    void clock();
     uint8_t fetch();
 
     struct INSTRUCTION
