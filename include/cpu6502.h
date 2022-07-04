@@ -55,6 +55,9 @@ private:
     bool getFlag(FLAGS6502 flag);
     void setFlag(FLAGS6502 flag, bool value);
 
+    void push(uint8_t val);
+    uint8_t pop();
+
     void clock();
     uint8_t fetch();
 
