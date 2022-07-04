@@ -8,7 +8,7 @@ Bus::Bus()
         i = 0x00;
     }
 
-    cpu.ConnectBus(this);
+    cpu.connectBus(this);
 }
 
 Bus::~Bus()

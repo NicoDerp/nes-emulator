@@ -1,5 +1,6 @@
-#ifndef INCLUDE_BUS_H
-#define INCLUDE_BUS_H
+//#ifndef INCLUDE_BUS_H
+//#define INCLUDE_BUS_H
+#pragma once
 
 #include <array>
 #include "cpu6502.h"
@@ -24,4 +25,4 @@ public:
 	void write(uint16_t addr, uint8_t data);
 };
 
-#endif /* INCLUDE_BUS_H */
+//#endif /* INCLUDE_BUS_H */

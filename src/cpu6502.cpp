@@ -1,4 +1,5 @@
 #include "cpu6502.h"
+#include "bus.h"
 
 
 cpu6502::cpu6502()
@@ -12,7 +13,7 @@ cpu6502::cpu6502()
      *
     ***/
 
-    using a = olc6502;
+    using a = cpu6502;
 	lookup =
 	{
 		{ "BRK", &a::BRK, &a::IMM, 7 },{ "ORA", &a::ORA, &a::IZX, 6 },{ "???", &a::XXX, &a::IMP, 2 },{ "???", &a::XXX, &a::IMP, 8 },{ "???", &a::NOP, &a::IMP, 3 },{ "ORA", &a::ORA, &a::ZP0, 3 },{ "ASL", &a::ASL, &a::ZP0, 5 },{ "???", &a::XXX, &a::IMP, 5 },{ "PHP", &a::PHP, &a::IMP, 3 },{ "ORA", &a::ORA, &a::IMM, 2 },{ "ASL", &a::ASL, &a::ACC, 2 },{ "???", &a::XXX, &a::IMP, 2 },{ "???", &a::NOP, &a::IMP, 4 },{ "ORA", &a::ORA, &a::ABS, 4 },{ "ASL", &a::ASL, &a::ABS, 6 },{ "???", &a::XXX, &a::IMP, 6 },
@@ -33,7 +34,6 @@ cpu6502::cpu6502()
 		{ "BEQ", &a::BEQ, &a::REL, 2 },{ "SBC", &a::SBC, &a::IZY, 5 },{ "???", &a::XXX, &a::IMP, 2 },{ "???", &a::XXX, &a::IMP, 8 },{ "???", &a::NOP, &a::IMP, 4 },{ "SBC", &a::SBC, &a::ZPX, 4 },{ "INC", &a::INC, &a::ZPX, 6 },{ "???", &a::XXX, &a::IMP, 6 },{ "SED", &a::SED, &a::IMP, 2 },{ "SBC", &a::SBC, &a::ABY, 4 },{ "NOP", &a::NOP, &a::IMP, 2 },{ "???", &a::XXX, &a::IMP, 7 },{ "???", &a::NOP, &a::IMP, 4 },{ "SBC", &a::SBC, &a::ABX, 4 },{ "INC", &a::INC, &a::ABX, 7 },{ "???", &a::XXX, &a::IMP, 7 },
 	};
 }
-}
 
 cpu6502::~cpu6502()
 {
@@ -52,7 +52,7 @@ void cpu6502::write(uint16_t addr, uint8_t data)
 
 bool cpu6502::getFlag(FLAGS6502 flag)
 {
-    return (bool)(FLAGS6502 & flag);
+    return (bool)(status & flag);
 }
 
 // flag:
@@ -69,9 +69,9 @@ bool cpu6502::getFlag(FLAGS6502 flag)
 void cpu6502::setFlag(FLAGS6502 flag, bool value)
 {
     if (value)
-        FLAGS6502 |= flag;
+        status |= flag;
     else
-        FLAGS6502 &= ~flag;
+        status &= ~flag;
 }
 
 void cpu6502::clock()
@@ -83,9 +83,9 @@ void cpu6502::clock()
         opcode = read(pc);
         pc++;
 
-        cycles = opLookup[opcode].cycles;
+        cycles = lookup[opcode].cycles;
 
-        if (opLookup[opcode].addrmode() && lookup[opcode].operate())
+        if ((this->*lookup[opcode].addrmode)() && (this->*lookup[opcode].operation)())
             cycles += 1;
     }
 
@@ -97,7 +97,7 @@ uint8_t cpu6502::fetch()
 {
     if (lookup[opcode].addrmode != &cpu6502::IMP ||
         lookup[opcode].addrmode != &cpu6502::ACC)
-        fetched = read(fetch_addr);
+        fetched = read(addr_abs);
 
     return fetched;
 }
