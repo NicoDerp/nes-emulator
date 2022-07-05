@@ -27,13 +27,12 @@ public:
         DrawString(x, y, "STATUS:", olc::WHITE);
         DrawString(x+64, y, "C", nes.cpu.getFlag(cpu6502::C) ? olc::GREEN : olc::RED);
         DrawString(x+80, y, "Z", nes.cpu.getFlag(cpu6502::Z) ? olc::GREEN : olc::RED);
-        DrawString(x+96, y, "C", nes.cpu.getFlag(cpu6502::C) ? olc::GREEN : olc::RED);
-	    DrawString(x+112, y, "I", nes.cpu.getFlag(cpu6502::I) ? olc::GREEN : olc::RED);
-        DrawString(x+128, y, "D", nes.cpu.getFlag(cpu6502::D) ? olc::GREEN : olc::RED);
-        DrawString(x+144, y, "B", nes.cpu.getFlag(cpu6502::B) ? olc::GREEN : olc::RED);
-        DrawString(x+160, y, "U", nes.cpu.getFlag(cpu6502::U) ? olc::GREEN : olc::RED);
-        DrawString(x+176, y, "V", nes.cpu.getFlag(cpu6502::V) ? olc::GREEN : olc::RED);
-        DrawString(x+192, y, "N", nes.cpu.getFlag(cpu6502::N) ? olc::GREEN : olc::RED);
+	    DrawString(x+96, y, "I", nes.cpu.getFlag(cpu6502::I) ? olc::GREEN : olc::RED);
+        DrawString(x+112, y, "D", nes.cpu.getFlag(cpu6502::D) ? olc::GREEN : olc::RED);
+        DrawString(x+128, y, "B", nes.cpu.getFlag(cpu6502::B) ? olc::GREEN : olc::RED);
+        DrawString(x+144, y, "U", nes.cpu.getFlag(cpu6502::U) ? olc::GREEN : olc::RED);
+        DrawString(x+160, y, "V", nes.cpu.getFlag(cpu6502::V) ? olc::GREEN : olc::RED);
+        DrawString(x+176, y, "N", nes.cpu.getFlag(cpu6502::N) ? olc::GREEN : olc::RED);
         DrawString(x, y+10, "PC: $" + hex(nes.cpu.pc, 4));
         DrawString(x, y+20, "A: $" + hex(nes.cpu.a, 2) + "[" + std::to_string(nes.cpu.a) + "]");
         DrawString(x, y+30, "X: $" + hex(nes.cpu.x, 2) + "[" + std::to_string(nes.cpu.x) + "]");
@@ -66,7 +65,7 @@ public:
            loop:
            dey
            bne loop
-           lda $FF
+           lda #$FF
            nop
            nop
            nop
@@ -74,7 +73,7 @@ public:
          */
 
         std::stringstream ss;
-        ss << "A0 0A 88 D0 FD A5 FF EA EA EA";
+        ss << "A0 0A 88 D0 FD A9 FF EA EA EA";
         uint16_t pgOffset = 0x8000;
         while (!ss.eof())
         {
@@ -149,7 +148,7 @@ int main()
 
 
     Emulator emu;
-    if (emu.Construct(640, 480, 2, 2))
+    if (emu.Construct(640, 480, 4, 4))
         emu.Start();
 
     return 0;
