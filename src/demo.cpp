@@ -86,9 +86,31 @@ public:
         nes.ram[0xFFFC] = 0x00; // Low byte
         nes.ram[0xFFFD] = 0x80; // High byte
 
+        asmMap = nes.cpu.disassemble(0x0000, 0xFFFF);
+
         nes.cpu.reset();
 
         return true;
+    }
+
+    void DrawCode(int x, int y, int lines)
+    {
+        std::map<uint16_t,std::string>::iterator cur = asmMap.find(nes.cpu.pc);
+        DrawString(x, y, cur->second, olc::CYAN);
+        cur++;
+        for (uint8_t i=1;(i<lines>>1)&&(cur!=asmMap.end());i++,cur++)
+        {
+            DrawString(x, y+i*10, cur->second);
+        }
+
+
+        cur = asmMap.find(nes.cpu.pc);
+        cur--;
+        for (uint8_t i=1;(i<lines>>1)&&(cur!=asmMap.end());i++,cur--)
+        {
+            DrawString(x, y-i*10, cur->second);
+        }
+
     }
 
     bool OnUserUpdate(float fElapsedTime) override
@@ -120,18 +142,21 @@ public:
         }
 
         DrawCpu(448, 2);
-
+        //        DrawCode(448, 72, 123);
+        /*
         DrawString(448, 70, "INSTRUCTION");
         DrawString(448, 80, nes.cpu.getInsName());
-        DrawString(448, 90, hex(nes.cpu.fetched, 2));
+        DrawString(448, 90, hex(nes.cpu.fetched, 2));*/
 
-        DrawString(448, 110, "CLOCK COUNT");
-        DrawString(448, 120, std::to_string(nes.cpu.clockCount));
+        DrawString(448, 400, "CLOCK COUNT");
+        DrawString(448, 410, std::to_string(nes.cpu.clockCount));
 
-        DrawString(448, 140, "PROGRAM COUNTER");
-        DrawString(448, 150, std::to_string(nes.cpu.pc));
+        DrawString(448, 430, "PROGRAM COUNTER");
+        DrawString(448, 440, std::to_string(nes.cpu.pc));
 
-        DrawPage(0, 0, 0x00, 16);
+        DrawPage(2, 2, 0x00, 16);
+        DrawPage(2, 182, 0x80, 16);
+        DrawCode(448, 200, 10);
 
         DrawString(10, 370, "SPACE = Step Instruction    R = Reset    I = IRQ    N = NMI");
 
@@ -140,6 +165,7 @@ public:
 
 private:
     Bus nes;
+    std::map<uint16_t, std::string> asmMap;
 };
 
 int main()

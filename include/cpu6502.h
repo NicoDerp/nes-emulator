@@ -6,6 +6,7 @@
 #include <stdint.h>
 #include <vector>
 #include <string>
+#include <map>
 
 // Forward declaration
 class Bus;
@@ -23,8 +24,8 @@ public:
     void nmi();
     void irq();
 
-    std::string getInsName();
     bool complete() { return cycles == 0; }
+    std::map<uint16_t, std::string> disassemble(uint16_t start, uint16_t end);
 
 public:
     enum FLAGS6502
@@ -64,7 +65,6 @@ private:
 
 	uint8_t read(uint16_t addr);
 	void write(uint16_t addr, uint8_t data);
-
 
     void push(uint8_t val);
     uint8_t pop();

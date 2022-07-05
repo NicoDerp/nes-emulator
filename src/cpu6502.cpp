@@ -49,6 +49,98 @@ void cpu6502::write(uint16_t addr, uint8_t data)
     bus->write(addr, data);
 }
 
+std::map<uint16_t, std::string> cpu6502::disassemble(uint16_t start, uint16_t end)
+{
+    auto hex = [](uint32_t n, uint8_t d)
+	{
+		std::string s(d, '0');
+		for (int i = d - 1; i >= 0; i--, n >>= 4)
+			s[i] = "0123456789ABCDEF"[n & 0xF];
+		return s;
+	};
+
+    std::map<uint16_t, std::string> map;
+
+    uint32_t addr = start;
+    uint16_t line;
+    uint8_t low, high;
+    while (addr<=(uint32_t)end)
+    {
+        line = addr;
+        opcode = read(addr++);
+
+        std::string s = "$"+hex(addr,4)+"    "+lookup[opcode].name+" ";
+        if (lookup[opcode].addrmode == &cpu6502::IMP)
+        {
+            s += " {IMP}";
+        }
+        else if (lookup[opcode].addrmode == &cpu6502::ACC)
+        {
+            s += "A  {ACC}";
+        }
+        else if (lookup[opcode].addrmode == &cpu6502::IMM)
+        {
+            s += "#$"+hex(read(addr++),2)+"  {IMM}";
+        }
+        else if (lookup[opcode].addrmode == &cpu6502::REL)
+        {
+            uint8_t offset = read(addr++);
+            s += "$"+hex(offset,2)+" ["+hex(addr+offset,4)+"]  {REL}";
+        }
+        else if (lookup[opcode].addrmode == &cpu6502::IND)
+        {
+            low = read(addr++);
+            high = read(addr++);
+            s += "$("+hex((high<<8)|low,4)+")  {IND}";
+        }
+        else if (lookup[opcode].addrmode == &cpu6502::ABS)
+        {
+            low = read(addr++);
+            high = read(addr++);
+            s += "$"+hex((high<<8)|low,4)+"  {ABS}";
+        }
+        else if (lookup[opcode].addrmode == &cpu6502::ABX)
+        {
+            low = read(addr++);
+            high = read(addr++);
+            s += "$"+hex((high<<8)|low,4)+",X  {ABX}";
+        }
+        else if (lookup[opcode].addrmode == &cpu6502::ABY)
+        {
+            low = read(addr++);
+            high = read(addr++);
+            s += "$"+hex((high<<8)|low,4)+",Y  {ABY}";
+        }
+        else if (lookup[opcode].addrmode == &cpu6502::ZP0)
+        {
+            s += "$"+hex(read(addr++),2)+"  {ZP0}";
+        }
+        else if (lookup[opcode].addrmode == &cpu6502::ZPX)
+        {
+            s += "$"+hex(read(addr++),2)+",X  {ZPX}";
+        }
+        else if (lookup[opcode].addrmode == &cpu6502::ZPY)
+        {
+            s += "$"+hex(read(addr++),2)+",Y  {ZPY}";
+        }
+        else if (lookup[opcode].addrmode == &cpu6502::IZX)
+        {
+            s += "($"+hex(read(addr++),2)+",X)  {IZX}";
+        }
+        else if (lookup[opcode].addrmode == &cpu6502::IZY)
+        {
+            s += "($"+hex(read(addr++),2)+",Y)  {IZY}";
+        }
+        else
+        {
+            s += " {XXX}";
+        }
+
+        map[line] = s;
+    }
+    return map;
+}
+
 bool cpu6502::getFlag(FLAGS6502 flag)
 {
     return (bool)(status & flag);
@@ -83,11 +175,6 @@ uint8_t cpu6502::pop()
 {
     stackptr++;
     return read(stackptr+0x0100);
-}
-
-std::string cpu6502::getInsName()
-{
-    return lookup[opcode].name;
 }
 
 void cpu6502::clock()
