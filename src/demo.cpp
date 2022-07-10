@@ -69,11 +69,46 @@ public:
            nop
            nop
            nop
+           --------
+           *=$8000
+           sed
+           lda #$28
+           clc
+           adc #$19
+           nop
+           nop
+           nop
+           --------
+           *=$8000
+           sed
+           lda #$12
+           clc
+           sbc #$21
+           nop
+           nop
+           nop
+           --------
+           *=$8000
+           sed
+           sec
+           lda #$12
+           sbc #$21
+
+           sed
+           sec
+           lda #$21
+           sbc #$34
+           nop
+           nop
+           nop
 
          */
 
         std::stringstream ss;
-        ss << "A0 0A 88 D0 FD A9 FF EA EA EA";
+        //ss << "A0 0A 88 D0 FD A9 FF EA EA EA";
+        //ss << "F8 A9 28 18 69 19 EA EA EA";
+        //ss << "F8 A9 12 18 E9 21 EA EA EA";
+        ss << "F8 38 A9 12 E9 21 F8 38 A9 21 E9 34 EA EA EA";
         uint16_t pgOffset = 0x8000;
         while (!ss.eof())
         {
@@ -156,7 +191,7 @@ public:
 
         DrawPage(2, 2, 0x00, 16);
         DrawPage(2, 182, 0x80, 16);
-        DrawCode(448, 200, 10);
+        DrawCode(448, 200, 26);
 
         DrawString(10, 370, "SPACE = Step Instruction    R = Reset    I = IRQ    N = NMI");
 

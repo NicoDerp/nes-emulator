@@ -188,8 +188,9 @@ void cpu6502::clock()
 
         cycles = lookup[opcode].cycles;
 
+        /*
         printf("Emulating '%s' [%d]\n", lookup[opcode].name.c_str(), opcode);
-        printf("Cycles %d\n", cycles);
+        printf("Cycles %d\n", cycles);*/
 
         bool c1 = (this->*lookup[opcode].addrmode)();
 
@@ -449,7 +450,33 @@ uint8_t cpu6502::IZY()
 
 uint8_t cpu6502::ADC()
 {
-    return 0;
+    fetch();
+    if (getFlag(D))
+    {
+        uint8_t one = (a&0x0F)+(fetched&0x0F)+getFlag(C);
+        uint8_t ten = (a>>4)+(fetched>>4);
+        if (one>9)
+        {
+            ten++;
+            one-=10;
+        }
+        // buruuh wtf idkam
+        setFlag(V, ten&0x08);
+        setFlag(C, ten>9);
+        if (ten>9)
+            ten-=10;
+        a = (ten*16)+one;
+    }
+    else
+    {
+        uint16_t tmp = a+fetched+getFlag(C);
+        setFlag(V, (a&0x80==fetched&0x80)&(a&0x80!=tmp&0x80));
+        setFlag(Z, a==0);
+        setFlag(C, tmp>0xFF);
+        setFlag(N, a&0x80);
+        a = tmp&0x00FF;
+    }
+    return 1;
 }
 
 uint8_t cpu6502::AND()
@@ -520,9 +547,9 @@ uint8_t cpu6502::BIT()
 {
     fetch();
     uint8_t tmp = a & fetched;
-    setFlag(N, fetched&(1<<7)); // Set the negative flag
     setFlag(V, fetched&(1<<6)); // Set the overflow flag
     setFlag(Z, tmp==0); // Set the zero flag
+    setFlag(N, fetched&(1<<7)); // Set the negative flag
     return 0;
 
 }
@@ -918,7 +945,57 @@ uint8_t cpu6502::RTS()
 
 uint8_t cpu6502::SBC()
 {
-    return 0;
+    fetch();
+    if (getFlag(D))
+    {
+        uint8_t one;
+        uint8_t ten;
+        bool borrow = false;
+        if (a&0x0F+getFlag(C)<fetched&0x0F)
+        {
+            borrow = true;
+            one = 9+(a&0x0F)-(fetched&0x0F)+getFlag(C);
+        }
+        else
+        {
+            one = (a&0x0F)-(fetched&0x0F)-getFlag(C)+1;
+        }
+
+        if ((a>>4)<(fetched>>4))
+        {
+            ten = 10+(a>>4)-(fetched>>4);
+            setFlag(C, 1);
+        }
+        else
+        {
+            ten = (a>>4)-(fetched>>4);
+            setFlag(C, 0);
+        }
+
+        if (borrow)
+        {
+            if (ten==0)
+                ten = 9;
+            else
+                ten--;
+        }
+
+        printf("Borrow: %d\n", borrow);
+
+
+        // No N, V and Z update
+        a = (ten*16)+one;
+    }
+    else
+    {
+        uint16_t tmp = a-fetched+getFlag(C);
+        a = tmp&0x00FF;
+        setFlag(V, (a&0x80==fetched&0x80)&(a&0x80!=tmp&0x80));
+        setFlag(C, a+getFlag(C)>=fetched);
+        setFlag(N, a&0x80);
+        setFlag(Z, a==0);
+    }
+    return 1;
 }
 
 uint8_t cpu6502::SEC()
