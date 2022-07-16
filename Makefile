@@ -26,7 +26,7 @@ $(APP_DIR)/$(TARGET): $(OBJECTS)
 
 #-include $(DEPENDENCIES)
 
-.PHONY: all build clean debug release info
+.PHONY: all build clean debug release info run
 
 build:
 	@mkdir -p $(APP_DIR)
@@ -35,12 +35,15 @@ build:
 debug: CXXFLAGS += -DDEBUG -g
 debug: all
 
-release: CXXFLAGS += -O2
+release: CXXFLAGS += -O3 -s
 release: all
 
 clean:
 	-@rm -rvf $(OBJ_DIR)/*
 	-@rm -rvf $(APP_DIR)/*
+
+run: $(APP_DIR)/$(TARGET)
+	$(APP_DIR)/$(TARGET)
 
 info:
 	@echo "[*] Application dir: ${APP_DIR}     "

@@ -69,7 +69,8 @@ std::map<uint16_t, std::string> cpu6502::disassemble(uint16_t start, uint16_t en
         line = addr;
         opcode = read(addr++);
 
-        std::string s = "$"+hex(addr,4)+"    "+lookup[opcode].name+" ";
+        std::string s = "$"+hex(addr-1,4)+"    "+lookup[opcode].name+" ";
+
         if (lookup[opcode].addrmode == &cpu6502::IMP)
         {
             s += " {IMP}";
@@ -230,7 +231,7 @@ void cpu6502::reset()
 
 void cpu6502::nmi()
 {
-    push((pc>>8)&0x00FF); // Push high byte
+    push(pc>>8); // Push high byte
     push(pc&0x00FF); // Push low byte
 
     setFlag(B, 0);
@@ -253,7 +254,7 @@ void cpu6502::irq()
 {
     if (!getFlag(I))
     {
-        push((pc>>8)&0x00FF); // Push high byte
+        push(pc>>8); // Push high byte
         push(pc&0x00FF); // Push low byte
 
         setFlag(B, 0);
@@ -274,7 +275,7 @@ void cpu6502::irq()
 
 uint8_t cpu6502::fetch()
 {
-    if (lookup[opcode].addrmode != &cpu6502::IMP ||
+    if (lookup[opcode].addrmode != &cpu6502::IMP &&
         lookup[opcode].addrmode != &cpu6502::ACC)
     {
         fetched = read(addr_abs);
@@ -875,6 +876,7 @@ uint8_t cpu6502::PHA()
 
 uint8_t cpu6502::PHP()
 {
+    setFlag(B, 0);
     push(status);
     return 0;
 }
@@ -979,9 +981,6 @@ uint8_t cpu6502::SBC()
             else
                 ten--;
         }
-
-        printf("Borrow: %d\n", borrow);
-
 
         // No N, V and Z update
         a = (ten*16)+one;

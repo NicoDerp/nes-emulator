@@ -101,6 +101,34 @@ public:
            nop
            nop
            nop
+           --------
+           *=$8000
+
+           lda #3
+           sta $00
+           lda #0
+
+           ldx #5
+
+           loop:
+           adc $00
+           dex
+           bne loop
+
+           lda #$DE
+           sta $03
+           lda #$AD
+           sta $04
+           lda #$BE
+           sta $05
+           lda #$EF
+           sta $06
+
+           nop
+           nop
+           nop
+           --------
+
 
          */
 
@@ -108,7 +136,9 @@ public:
         //ss << "A0 0A 88 D0 FD A9 FF EA EA EA";
         //ss << "F8 A9 28 18 69 19 EA EA EA";
         //ss << "F8 A9 12 18 E9 21 EA EA EA";
-        ss << "F8 38 A9 12 E9 21 F8 38 A9 21 E9 34 EA EA EA";
+        //ss << "F8 38 A9 12 E9 21 F8 38 A9 21 E9 34 EA EA EA";
+        ss << "A9 10 8D FE FF A9 80 8D FF FF 4C 0A 80 EA EA EA E6 00 58 40";
+        /*
         uint16_t pgOffset = 0x8000;
         while (!ss.eof())
         {
@@ -116,10 +146,22 @@ public:
             ss >> b;
             nes.ram[pgOffset++] = (uint8_t)std::stoul(b, nullptr, 16);
         }
+        */
+
+        if (!nes.load("nestest.nes"))
+        {
+            printf("Failed to load file\n");
+            return false;
+        }
 
         // Reset vector to program start (0x8000)
         nes.ram[0xFFFC] = 0x00; // Low byte
         nes.ram[0xFFFD] = 0x80; // High byte
+
+        /*
+        nes.ram[0xFFFC] = 0x00; // Low byte
+        nes.ram[0xFFFD] = 0xC0; // High byte
+        */
 
         asmMap = nes.cpu.disassemble(0x0000, 0xFFFF);
 
@@ -131,7 +173,8 @@ public:
     void DrawCode(int x, int y, int lines)
     {
         std::map<uint16_t,std::string>::iterator cur = asmMap.find(nes.cpu.pc);
-        DrawString(x, y, cur->second, olc::CYAN);
+        if (cur!=asmMap.end())
+            DrawString(x, y, cur->second, olc::CYAN);
         cur++;
         for (uint8_t i=1;(i<lines>>1)&&(cur!=asmMap.end());i++,cur++)
         {
@@ -152,7 +195,11 @@ public:
     {
         Clear(olc::DARK_GREY);
 
-        if (GetKey(olc::Key::SPACE).bPressed)
+        if (GetKey(olc::Key::ESCAPE).bPressed)
+        {
+            return false;
+        }
+        else if (GetKey(olc::Key::SPACE).bPressed)
         {
             do
             {
@@ -160,28 +207,20 @@ public:
             }
             while (!nes.cpu.complete());
         }
-
-        if (GetKey(olc::Key::R).bPressed)
+        else if (GetKey(olc::Key::R).bPressed)
         {
             nes.cpu.reset();
         }
-
-        if (GetKey(olc::Key::I).bPressed)
+        else if (GetKey(olc::Key::I).bPressed)
         {
             nes.cpu.irq();
         }
-
-        if (GetKey(olc::Key::N).bPressed)
+        else if (GetKey(olc::Key::N).bPressed)
         {
             nes.cpu.nmi();
         }
 
         DrawCpu(448, 2);
-        //        DrawCode(448, 72, 123);
-        /*
-        DrawString(448, 70, "INSTRUCTION");
-        DrawString(448, 80, nes.cpu.getInsName());
-        DrawString(448, 90, hex(nes.cpu.fetched, 2));*/
 
         DrawString(448, 400, "CLOCK COUNT");
         DrawString(448, 410, std::to_string(nes.cpu.clockCount));

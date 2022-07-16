@@ -4597,7 +4597,13 @@ namespace olc
 
 	public:
 		virtual olc::rcode ApplicationStartUp() override { return olc::rcode::OK; }
-		virtual olc::rcode ApplicationCleanUp() override { return olc::rcode::OK; }
+		virtual olc::rcode ApplicationCleanUp() override
+        {
+            XDestroyWindow(olc_Display, olc_Window);
+            XFree(olc_VisualInfo);
+            XCloseDisplay(olc_Display);
+            return olc::rcode::OK;
+        }
 		virtual olc::rcode ThreadStartUp() override { return olc::rcode::OK; }
 
 		virtual olc::rcode ThreadCleanUp() override
