@@ -17,7 +17,7 @@ public:
     cpu6502();
     ~cpu6502();
 
-    void connectBus(class Bus *n) { bus = n; };
+    void connectBus(class CPUBus *n) { bus = n; };
 
     void clock();
     void reset();
@@ -61,7 +61,7 @@ public:
     uint16_t addr_rel = 0x0000; // Address computed by the addres mode for operand to use
 
 private:
-	Bus *bus = nullptr;
+	CPUBus *bus = nullptr;
 
 	uint8_t read(uint16_t addr);
 	void write(uint16_t addr, uint8_t data);

@@ -3,7 +3,7 @@
 
 #include <iostream>
 #include "olcPixelGameEngine.h"
-#include "bus.h"
+#include "cpubus.h"
 
 class Emulator : public olc::PixelGameEngine
 {
@@ -238,7 +238,7 @@ public:
     }
 
 private:
-    Bus nes;
+    CPUBus nes;
     std::map<uint16_t, std::string> asmMap;
 };
 
