@@ -132,12 +132,8 @@ public:
 
          */
 
-        std::stringstream ss;
-        //ss << "A0 0A 88 D0 FD A9 FF EA EA EA";
-        //ss << "F8 A9 28 18 69 19 EA EA EA";
-        //ss << "F8 A9 12 18 E9 21 EA EA EA";
-        //ss << "F8 38 A9 12 E9 21 F8 38 A9 21 E9 34 EA EA EA";
-        ss << "A9 10 8D FE FF A9 80 8D FF FF 4C 0A 80 EA EA EA E6 00 58 40";
+        //std::stringstream ss;
+        //ss << "A9 10 8D FE FF A9 80 8D FF FF 4C 0A 80 EA EA EA E6 00 58 40";
         /*
         uint16_t pgOffset = 0x8000;
         while (!ss.eof())
@@ -148,20 +144,14 @@ public:
         }
         */
 
-        if (!nes.load("nestest.nes"))
+        cart = std::make_shared<Cartridge>("nestest.nes");
+
+        nes.insertCartridge(cart);
+        if (!cart.imageValid())
         {
-            printf("Failed to load file\n");
+            printf("[ERROR] Failed to load image\n");
             return false;
         }
-
-        // Reset vector to program start (0x8000)
-        nes.ram[0xFFFC] = 0x00; // Low byte
-        nes.ram[0xFFFD] = 0x80; // High byte
-
-        /*
-        nes.ram[0xFFFC] = 0x00; // Low byte
-        nes.ram[0xFFFD] = 0xC0; // High byte
-        */
 
         asmMap = nes.cpu.disassemble(0x0000, 0xFFFF);
 
@@ -239,6 +229,7 @@ public:
 
 private:
     CPUBus nes;
+    std::shared_ptr<Cartridge> cart;
     std::map<uint16_t, std::string> asmMap;
 };
 

@@ -31,7 +31,7 @@ uint8_t CPUBus::read(uint16_t addr)
     }
     else if (addr >= 0x2000 && addr <= 0x3FFF)
     {
-        return ppu.cpuRead(addr&0x7);
+        return ppu.cpuRead(addr);
     }
 
     return 0x00;
@@ -49,8 +49,17 @@ void CPUBus::write(uint16_t addr, uint8_t data)
     }
     else if (addr >= 0x2000 && addr <= 0x3FFF)
     {
-        ppu.cpuWrite(addr&0x7, data);
+        ppu.cpuWrite(addr, data);
     }
 }
 
+void CPUBus::insertCartridge(const std::shared_ptr<Cartridge>& cartridge)
+{
+    cart = cartridge;
+    ppu.insertCartridge(cartridge);
+    for (uint16_t i=0x0000;i+0x8000<0xFFFF;i++)
+    {
+        cart.prg_rom[]
+    }
+}
 

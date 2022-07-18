@@ -1,9 +1,11 @@
 
 #pragma once
 
+#include "ppubus.h"
+
 // Forward declarations
 class Bus;
-class PPUBus;
+class Cartridge;
 
 struct Sprite
 {
@@ -19,11 +21,15 @@ public:
     ppu2C02();
     ~ppu2C02();
 
+public:
     uint8_t cpuRead(uint16_t addr);
     void cpuWrite(uint16_t addr, uint8_t data);
 
+    void insertCartridge(const std::shared_ptr<Cartridge>& cartridge);
+
 private:
-    PPUBus* bus = nullptr;
+    //    PPUBus* bus = nullptr;
+    PPUBus bus;
     struct Sprite oam[64];
 
     uint8_t read(uint16_t addr);

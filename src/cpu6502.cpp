@@ -1,5 +1,5 @@
 #include "cpu6502.h"
-#include "bus.h"
+#include "cpubus.h"
 
 cpu6502::cpu6502()
 {
@@ -86,7 +86,7 @@ std::map<uint16_t, std::string> cpu6502::disassemble(uint16_t start, uint16_t en
         else if (lookup[opcode].addrmode == &cpu6502::REL)
         {
             uint8_t offset = read(addr++);
-            s += "$"+hex(offset,2)+" ["+hex(addr+offset,4)+"]  {REL}";
+            s += "$"+hex(offset,2)+" [$"+hex(addr+(int8_t)offset,4)+"]  {REL}";
         }
         else if (lookup[opcode].addrmode == &cpu6502::IND)
         {
@@ -236,9 +236,10 @@ void cpu6502::nmi()
 
     setFlag(B, 0);
     setFlag(U, 1);
-    setFlag(I, 1);
 
     push(status); // Push status register
+
+    setFlag(I, 1);
 
     // Read new program counter
     uint8_t low = read(0xFFFA);
@@ -259,9 +260,10 @@ void cpu6502::irq()
 
         setFlag(B, 0);
         setFlag(U, 1);
-        setFlag(I, 1);
 
         push(status); // Push status register
+
+        setFlag(I, 1);
 
         // Read new program counter
         uint8_t low = read(0xFFFE);
@@ -929,7 +931,7 @@ uint8_t cpu6502::RTI()
 {
     status = pop();
     setFlag(B, 0);
-    setFlag(U, 0);
+    setFlag(U, 1);
 
     uint8_t low = pop();
     uint8_t high = pop();

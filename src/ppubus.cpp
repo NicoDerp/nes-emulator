@@ -1,23 +1,8 @@
 #include <cstring>
 #include "ppubus.h"
 
-PPUBus::PPUBus(ppu2C02* n)
+PPUBus::PPUBus()
 {
-    this->ppu = n;
-
-    // Clear stuff just in case
-    memset(patterns, 0, sizeof(patterns));
-    memset(nametables, 0, sizeof(nametables));
-    for (auto &i : palette)
-    {
-        i = 0x00;
-    }
-    /*
-    for (auto &i : ppu->omc)
-    {
-        i = 0x00;
-    }
-    */
 
 }
 
@@ -54,5 +39,10 @@ void PPUBus::write(uint16_t addr, uint8_t data)
     {
         //ram[addr&0x07FF] = data;
     }
+}
+
+void PPUBus::insertCartridge(const std::shared_ptr<Cartridge>& cartridge)
+{
+    cart = cartridge;
 }
 

@@ -2,8 +2,6 @@
 
 #include <array>
 #include <memory>
-#include "cpu6502.h"
-#include "ppu2C02.h"
 #include "cartridge.h"
 
 struct Tile
@@ -21,16 +19,13 @@ struct Nametable
 class PPUBus
 {
 public:
-	PPUBus(ppu2C02* n);
+	PPUBus();
 	~PPUBus();
 
 // Devices
 public:
-	// CPU bus
-    CPUBus* cpuBus;
-
     // PPU
-    ppu2C02* ppu;
+    //ppu2C02* ppu;
 
     // Patterns
     struct Tile patterns[512];
@@ -48,4 +43,6 @@ public:
 public:
 	uint8_t read(uint16_t addr);
 	void write(uint16_t addr, uint8_t data);
+
+    void insertCartridge(const std::shared_ptr<Cartridge>& cartridge);
 };

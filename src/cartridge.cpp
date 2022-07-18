@@ -1,7 +1,7 @@
 #include "cartridge.h"
 
 
-Cartridge::Cartridge()
+Cartridge::Cartridge(const std::string& filename)
 {
     struct
     {
@@ -16,47 +16,45 @@ Cartridge::Cartridge()
         char unused[5];
     } header;
 
+    imageValid_ = false;
+
     std::ifstream file(filename, std::ios::binary);
 
     if (!file)
         return;
 
-    file.read(&header, 16);
+    file.read((char*)&header, 16);
 
     if (strncmp(header.name,"NES",3)!=0 || header.name[3]!=26)
     {
         file.close();
-        return false;
+        return;
     }
 
     // NES 2.0 format not supported
-    if ((flags7>>2)&0x3==2)
+    if ((header.flags7>>2)&0x3==2)
     {
         file.close();
-        return false;
+        return;
     }
 
     // Trainer
-    if (flags6.trainer)
+    if ((header.flags6)&0x4==4)
         file.ignore(512);
 
-    prgBanks = prg_rom_size;
-    chrBanks = chr_rom_size;
+    prgBanks = header.prg_rom_size;
+    chrBanks = header.chr_rom_size;
 
-    prg_rom.resize(16384*prg_rom_size);
-    chr_rom.resize(8192*chr_rom_size);
+    prg_rom.resize(16384*header.prg_rom_size);
+    chr_rom.resize(8192*header.chr_rom_size);
 
     file.read((char*)prg_rom.data(), prg_rom.size());
     file.read((char*)chr_rom.data(), prg_rom.size());
 
     mapperID = (header.flags7&0xF0)|(header.flags6>>4);
 
-        //for (uint16_t offset=0x0000;offset<16384*prg_rom_size;offset++)
-        //{
-        //    ram[0x8000+offset] = prg_rom[offset];
-        //}
-
     file.close();
+    imageValid_ = true;
 }
 
 Cartridge::~Cartridge()
@@ -64,19 +62,19 @@ Cartridge::~Cartridge()
 
 }
 
-uint8_t Cartridge::cpuRead(uint16_t addr)
+bool Cartridge::cpuRead(uint16_t &addr)
 {
+    return false;
+}
 
+bool Cartridge::ppuRead(uint16_t &addr)
+{
+    return false;
 }
 
 bool Cartridge::cpuWrite(uint16_t addr, uint8_t data)
 {
     return false;
-}
-
-uint8_t Cartridge::ppuRead(uint16_t addr)
-{
-
 }
 
 bool Cartridge::ppuWrite(uint16_t addr, uint8_t data)
