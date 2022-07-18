@@ -26,7 +26,7 @@ $(APP_DIR)/$(TARGET): $(OBJECTS)
 
 #-include $(DEPENDENCIES)
 
-.PHONY: all build clean debug release info run
+.PHONY: all build clean debug release info run remake
 
 build:
 	@mkdir -p $(APP_DIR)
@@ -44,6 +44,8 @@ clean:
 
 run: $(APP_DIR)/$(TARGET)
 	$(APP_DIR)/$(TARGET)
+
+remake: clean all
 
 info:
 	@echo "[*] Application dir: ${APP_DIR}     "

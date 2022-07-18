@@ -4,6 +4,7 @@
 #include <iostream>
 #include "olcPixelGameEngine.h"
 #include "cpubus.h"
+#include "helper.h"
 
 class Emulator : public olc::PixelGameEngine
 {
@@ -14,14 +15,6 @@ public:
     }
 
 public:
-    std::string hex(uint32_t n, uint8_t d)
-	{
-		std::string s(d, '0');
-		for (int i = d - 1; i >= 0; i--, n >>= 4)
-			s[i] = "0123456789ABCDEF"[n & 0xF];
-		return s;
-	};
-
     void DrawCpu(int x, int y)
     {
         DrawString(x, y, "STATUS:", olc::WHITE);
@@ -147,13 +140,16 @@ public:
         cart = std::make_shared<Cartridge>("nestest.nes");
 
         nes.insertCartridge(cart);
-        if (!cart.imageValid())
+        if (!cart->imageValid())
         {
             printf("[ERROR] Failed to load image\n");
             return false;
         }
 
         asmMap = nes.cpu.disassemble(0x0000, 0xFFFF);
+
+        nes.write(0xFFFC, 0x04);
+        nes.write(0xFFFD, 0xC0);
 
         nes.cpu.reset();
 
@@ -214,9 +210,6 @@ public:
 
         DrawString(448, 400, "CLOCK COUNT");
         DrawString(448, 410, std::to_string(nes.cpu.clockCount));
-
-        DrawString(448, 430, "PROGRAM COUNTER");
-        DrawString(448, 440, std::to_string(nes.cpu.pc));
 
         DrawPage(2, 2, 0x00, 16);
         DrawPage(2, 182, 0x80, 16);

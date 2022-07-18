@@ -28,9 +28,10 @@ public:
     void insertCartridge(const std::shared_ptr<Cartridge>& cartridge);
 
 private:
-    //    PPUBus* bus = nullptr;
     PPUBus bus;
     struct Sprite oam[64];
+
+    std::shared_ptr<Cartridge> cart;
 
     uint8_t read(uint16_t addr);
     void write(uint16_t addr, uint8_t data);

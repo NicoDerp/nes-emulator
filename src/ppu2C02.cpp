@@ -1,6 +1,7 @@
 
 #include "ppu2C02.h"
 
+
 ppu2C02::ppu2C02()
 {
     // Clear stuff just in case
@@ -74,11 +75,17 @@ uint8_t ppu2C02::cpuRead(uint16_t addr)
 
 void ppu2C02::cpuWrite(uint16_t addr, uint8_t data)
 {
+    addr &= 0x3FFF; // Mirror?
 
+    if (cart->ppuWrite(addr, data))
+    {
+
+    }
 }
 
 void ppu2C02::insertCartridge(const std::shared_ptr<Cartridge>& cartridge)
 {
+    cart = cartridge;
     bus.insertCartridge(cartridge);
 }
 

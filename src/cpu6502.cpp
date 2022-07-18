@@ -1,5 +1,6 @@
 #include "cpu6502.h"
 #include "cpubus.h"
+#include "helper.h"
 
 cpu6502::cpu6502()
 {
@@ -51,14 +52,6 @@ void cpu6502::write(uint16_t addr, uint8_t data)
 
 std::map<uint16_t, std::string> cpu6502::disassemble(uint16_t start, uint16_t end)
 {
-    auto hex = [](uint32_t n, uint8_t d)
-	{
-		std::string s(d, '0');
-		for (int i = d - 1; i >= 0; i--, n >>= 4)
-			s[i] = "0123456789ABCDEF"[n & 0xF];
-		return s;
-	};
-
     std::map<uint16_t, std::string> map;
 
     uint32_t addr = start;
@@ -221,6 +214,7 @@ void cpu6502::reset()
     uint8_t high = read(0xFFFD);
 
     pc = (high << 8) | low;
+    printf("PC: 0x%s\n", hex(pc,4).c_str());
 
     addr_rel = 0x0000;
     addr_abs = 0x0000;
