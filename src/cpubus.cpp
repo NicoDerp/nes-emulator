@@ -61,3 +61,21 @@ void CPUBus::insertCartridge(const std::shared_ptr<Cartridge>& cartridge)
     ppu.insertCartridge(cartridge);
 }
 
+void CPUBus::reset()
+{
+    cpu.reset();
+    systemClockCount = 0;
+}
+
+void CPUBus::clock()
+{
+    //    printf("NES CLOCK!\n");
+    cpu.clock();
+    if (++systemClockCount == 3)
+    {
+        ppu.clock();
+        //  printf("PPU CLOCK!\n");
+        systemClockCount = 0;
+    }
+}
+

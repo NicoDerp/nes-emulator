@@ -51,106 +51,23 @@ public:
 
     bool OnUserCreate() override
     {
-        /** Load program (assembled at https://www.masswerk.at/6502/assembler.html)
-
-           *=$8000
-           ldy #10
-           loop:
-           dey
-           bne loop
-           lda #$FF
-           nop
-           nop
-           nop
-           --------
-           *=$8000
-           sed
-           lda #$28
-           clc
-           adc #$19
-           nop
-           nop
-           nop
-           --------
-           *=$8000
-           sed
-           lda #$12
-           clc
-           sbc #$21
-           nop
-           nop
-           nop
-           --------
-           *=$8000
-           sed
-           sec
-           lda #$12
-           sbc #$21
-
-           sed
-           sec
-           lda #$21
-           sbc #$34
-           nop
-           nop
-           nop
-           --------
-           *=$8000
-
-           lda #3
-           sta $00
-           lda #0
-
-           ldx #5
-
-           loop:
-           adc $00
-           dex
-           bne loop
-
-           lda #$DE
-           sta $03
-           lda #$AD
-           sta $04
-           lda #$BE
-           sta $05
-           lda #$EF
-           sta $06
-
-           nop
-           nop
-           nop
-           --------
-
-
-         */
-
-        //std::stringstream ss;
-        //ss << "A9 10 8D FE FF A9 80 8D FF FF 4C 0A 80 EA EA EA E6 00 58 40";
-        /*
-        uint16_t pgOffset = 0x8000;
-        while (!ss.eof())
-        {
-            std::string b;
-            ss >> b;
-            nes.ram[pgOffset++] = (uint8_t)std::stoul(b, nullptr, 16);
-        }
-        */
-
+        // Load the cartridge
         cart = std::make_shared<Cartridge>("nestest.nes");
 
-        nes.insertCartridge(cart);
+        // Check if the image is valid
         if (!cart->imageValid())
         {
             printf("[ERROR] Failed to load image\n");
             return false;
         }
 
+        // Insert cartridge into NES
+        nes.insertCartridge(cart);
+
+        // Disassemble code
         asmMap = nes.cpu.disassemble(0x0000, 0xFFFF);
 
-        nes.write(0xFFFC, 0x04);
-        nes.write(0xFFFD, 0xC0);
-
+        // Reset
         nes.cpu.reset();
 
         return true;
@@ -187,35 +104,42 @@ public:
         }
         else if (GetKey(olc::Key::SPACE).bPressed)
         {
-            do
-            {
-                nes.cpu.clock();
-            }
+            do { nes.clock(); }
             while (!nes.cpu.complete());
+
+            // Not sure why
+            do { nes.clock(); }
+            while (nes.cpu.complete());
+
+        }
+        else if (GetKey(olc::Key::F).bPressed)
+        {
+            do { nes.clock(); }
+            while (!nes.ppu.frame_complete);
+
+            do { nes.clock(); }
+            while (!nes.cpu.complete());
+
+            nes.ppu.frame_complete = false;
         }
         else if (GetKey(olc::Key::R).bPressed)
         {
             nes.cpu.reset();
         }
-        else if (GetKey(olc::Key::I).bPressed)
-        {
-            nes.cpu.irq();
-        }
-        else if (GetKey(olc::Key::N).bPressed)
-        {
-            nes.cpu.nmi();
-        }
 
-        DrawCpu(448, 2);
+        DrawCpu(520, 2);
 
-        DrawString(448, 400, "CLOCK COUNT");
-        DrawString(448, 410, std::to_string(nes.cpu.clockCount));
+        DrawString(520, 350, "CLOCK COUNT");
+        DrawString(520, 360, std::to_string(nes.cpu.clockCount));
 
-        DrawPage(2, 2, 0x00, 16);
-        DrawPage(2, 182, 0x80, 16);
-        DrawCode(448, 200, 26);
+        //        DrawPage(2, 2, 0x00, 16);
+        //DrawPage(2, 182, 0x80, 16);
 
-        DrawString(10, 370, "SPACE = Step Instruction    R = Reset    I = IRQ    N = NMI");
+        DrawSprite(0, 0, &nes.ppu.getScreen(), 2);
+
+        DrawCode(520, 200, 26);
+
+        //        DrawString(10, 370, "SPACE = Step Instruction   F = Complete Single Frame    R = Reset");
 
         return true;
     }
@@ -228,11 +152,8 @@ private:
 
 int main()
 {
-    //printf("Starting emulator...\n");
-
-
     Emulator emu;
-    if (emu.Construct(640, 480, 4, 4))
+    if (emu.Construct(780, 480, 4, 4))
         emu.Start();
 
     return 0;

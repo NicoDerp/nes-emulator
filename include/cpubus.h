@@ -38,7 +38,13 @@ public:
 	uint8_t read(uint16_t addr);
 	void write(uint16_t addr, uint8_t data);
 
+public:
     void insertCartridge(const std::shared_ptr<Cartridge>& cartridge);
+    void reset();
+    void clock();
+
+private:
+    uint8_t systemClockCount = 0;
 };
 
 //#endif /* INCLUDE_CPU_BUS_H */

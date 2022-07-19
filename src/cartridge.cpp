@@ -45,8 +45,7 @@ Cartridge::Cartridge(const std::string& filename)
     if (header.flags6&0x4)
     {
         printf("[NOTE] The nes rom has a trainer");
-        //file.ignore(512);
-        file.seekg(512, std::ios_base::cur);
+        file.ignore(512);
     }
 
     prgBanks = header.prg_rom_size;
@@ -66,7 +65,7 @@ Cartridge::Cartridge(const std::string& filename)
         mapper = new Mapper00(prgBanks, chrBanks);
     else
     {
-        printf("[ERROR] Unknown mapper %d. Probably coming soon...", mapperID);
+        printf("[ERROR] Unknown mapper 0x%s. Probably coming soon...", hex(mapperID,2).c_str());
         return;
     }
 
