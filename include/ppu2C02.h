@@ -47,7 +47,7 @@ public:
     bool frame_complete = false;
 
     // If the ppu is requesting an nmi (from VBLANK)
-    bool nmi;
+    bool nmi = false;
 
 private:
 
@@ -78,7 +78,7 @@ private:
             bool bgr_pattern_addr:1;
             bool sprite_size:1;
             bool slave_mode:1; // Unused?
-            bool vblank_nmi;
+            bool vblank_nmi:1;
         };
 
         uint8_t regs;

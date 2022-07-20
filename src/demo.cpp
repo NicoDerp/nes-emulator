@@ -84,14 +84,12 @@ public:
             DrawString(x, y+i*10, cur->second);
         }
 
-
         cur = asmMap.find(nes.cpu.pc);
         cur--;
         for (uint8_t i=1;(i<lines>>1)&&(cur!=asmMap.end());i++,cur--)
         {
             DrawString(x, y-i*10, cur->second);
         }
-
     }
 
     bool OnUserUpdate(float fElapsedTime) override
@@ -102,12 +100,18 @@ public:
 
         if (running)
         {
-            if (totalElapsedTime >= (1.0f/60.0f))
-            {
-                do {nes.clock();} while (!nes.ppu.frame_complete);
-                nes.ppu.frame_complete = false;
-                totalElapsedTime = 0.0f;
-            }
+            //if (totalElapsedTime >= (1.0f/60.0f))
+            //{
+            //    do {nes.clock();} while (!nes.ppu.frame_complete);
+            //    nes.ppu.frame_complete = false;
+            //    totalElapsedTime = 0.0f;
+            //}
+            //            if (totalElapsedTime >= (1.0f/500.0f))
+            //{
+            for (uint8_t n=0;n<50;n++)
+                do {nes.clock();} while (!nes.cpu.complete());
+            //totalElapsedTime = 0.0f;
+                //}
         }
 
         if (GetKey(olc::Key::ESCAPE).bPressed)
@@ -116,16 +120,12 @@ public:
         }
         else if (GetKey(olc::Key::SPACE).bPressed)
         {
-            //            for (uint8_t n=0;n<1;n++)
-            //            {
                 do { nes.clock(); }
                 while (!nes.cpu.complete());
 
                 // Not sure why
                 do { nes.clock(); }
                 while (nes.cpu.complete());
-                //            }
-
         }
         else if (GetKey(olc::Key::F).bPressed)
         {
@@ -162,7 +162,7 @@ public:
         DrawCpu(520, 2);
         DrawCode(520, 200, 26);
 
-        //        DrawPage(2, 2, 0x00, 16);
+        //DrawPage(2, 2, 0x00, 16);
         //DrawPage(2, 182, 0x80, 16);
 
         DrawSprite(516, 348, &nes.ppu.updatePaletteSprite(0, selectedPalette));

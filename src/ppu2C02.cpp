@@ -164,6 +164,8 @@ void ppu2C02::cpuWrite(uint16_t addr, uint8_t data)
 
     if (addr==0x0) // PPUCTRL
     {
+        if (data & (1<<7))
+            printf("VBLANK_NMI SET!\n");
         control.regs = data;
     }
     else if (addr==0x1) // PPUMASK
@@ -201,7 +203,6 @@ void ppu2C02::cpuWrite(uint16_t addr, uint8_t data)
     }
     else if (addr==0x7) // PPUDATA
     {
-        //printf("CALLING BUS::WRITE(0x%s, 0x%s)\n",hex(ppu_addr,4).c_str(),hex(data,2).c_str());
         bus.write(ppu_addr, data);
         ppu_addr += (control.increment_mode ? 32 : 1); // im*31+1
     }
@@ -220,7 +221,25 @@ void ppu2C02::insertCartridge(const std::shared_ptr<Cartridge>& cartridge)
 void ppu2C02::clock()
 {
     //sprScreen.SetPixel(cycle-1, scanline, palScreen[(rand()%2) ? 0x3F : 0x30]);
+    //    sprScreen.SetPixel(cycle-1, scanline, palScreen[getColorFromPaletteRam()]);
     // x
+
+    //printf("NMI ON FRAME COMPLETE: %d\n", control.vblank_nmi);
+
+    // VBLANK!
+    if (scanline >= 241 && scanline < 261)
+    {
+        // END OF FRAME!!
+        if (scanline == 241 && cycle == 1)
+        {
+            status.vblank = true;
+
+            if (control.vblank_nmi)
+                nmi = true;
+        }
+
+    }
+
     cycle++;
     if (cycle >= 341)
     {
@@ -233,15 +252,6 @@ void ppu2C02::clock()
         {
             scanline = -1;
             frame_complete = true;
-
-            status.vblank = true;
-
-            if (control.vblank_nmi)
-                nmi = true;
-        }
-        else
-        {
-            status.vblank = false;
         }
     }
 }
@@ -250,7 +260,7 @@ void ppu2C02::reset()
 {
     control.regs = 0x00;
     mask.regs = 0x00;
-    //    status.regs =
+    status.regs = 0x00;
     ppu_addr_latch = false;
     ppu_data_buffer = 0x00;
     //ppu_scroll_stuff = 0x00;

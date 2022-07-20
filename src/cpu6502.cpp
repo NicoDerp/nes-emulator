@@ -182,9 +182,8 @@ void cpu6502::clock()
 
         cycles = lookup[opcode].cycles;
 
-        /*
-        printf("Emulating '%s' [%d]\n", lookup[opcode].name.c_str(), opcode);
-        printf("Cycles %d\n", cycles);*/
+        //printf("Emulating '%s' [%d]\n", lookup[opcode].name.c_str(), opcode);
+        //printf("Cycles %d\n", cycles);
 
         bool c1 = (this->*lookup[opcode].addrmode)();
 
@@ -195,7 +194,6 @@ void cpu6502::clock()
 
         setFlag(U, 1);
     }
-
     // One cycle has passed
     cycles--;
     clockCount++;

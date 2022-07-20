@@ -72,8 +72,6 @@ Cartridge::Cartridge(const std::string& filename)
     printf("PRG BANKS: %d\n", prgBanks);
     printf("CHR BANKS: %d\n", chrBanks);
     printf("MAPPER ID: %d\n", mapperID);
-    printf("RESET: 0x%s%s\n", hex(prg_rom[0x7FFD],2).c_str(), hex(prg_rom[0x7FFC],2).c_str());
-    printf("TEST: 0x%s\n", hex(prg_rom[0x0000],2).c_str());
 
     imageValid_ = true;
 }

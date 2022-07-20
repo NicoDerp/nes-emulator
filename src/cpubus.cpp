@@ -2,7 +2,7 @@
 #include <cstring>
 #include <iostream>
 #include "cpubus.h"
-//#include "helper.h"
+#include "helper.h"
 
 CPUBus::CPUBus()
 {
@@ -70,14 +70,14 @@ void CPUBus::reset()
 
 void CPUBus::clock()
 {
-    //    printf("NES CLOCK!\n");
-    cpu.clock();
+    ppu.clock();
+
     if (++systemClockCount == 3)
     {
-        ppu.clock();
-        //  printf("PPU CLOCK!\n");
+        cpu.clock();
         systemClockCount = 0;
     }
+
     if (ppu.nmi)
     {
         ppu.nmi = false;
