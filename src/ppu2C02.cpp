@@ -2,69 +2,13 @@
 #include "ppu2C02.h"
 
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 ppu2C02::ppu2C02()
 {
     // Clear stuff just in case
-    memset(bus.patterns, 0, sizeof(bus.patterns));
-    memset(bus.nametables, 0, sizeof(bus.nametables));
+    memset((uint8_t*)bus.patternTable, 0, sizeof(sizeof(bus.patternTable)));
+    memset(bus.nametables.bytes, 0, sizeof(bus.nametables));
     memset(bus.palette, 0, sizeof(bus.palette));
-    memset(oam, 0, sizeof(oam));
+    memset(oam.bytes, 0, sizeof(oam));
 
     palScreen[0x00] = olc::Pixel(84, 84, 84);
     palScreen[0x01] = olc::Pixel(0, 30, 116);
@@ -141,70 +85,113 @@ ppu2C02::~ppu2C02()
 
 }
 
-uint8_t ppu2C02::read(uint16_t addr)
-{
-    uint8_t data = 0x00;
-    addr &= 0x3FFF; // Mirror?
-
-    if (cart->ppuRead(addr, &data))
-    {
-
-    }
-
-    return data;
-}
-
-void ppu2C02::write(uint16_t addr, uint8_t data)
-{
-    bus.write(addr, data);
-}
-
 uint8_t ppu2C02::cpuRead(uint16_t addr)
 {
     addr &= 0x7; // Mirror
 
     if (addr==0x0) // PPUCTRL
     {
-
+        // Write-only
     }
     else if (addr==0x1) // PPUMASK
     {
-
+        // Write-only
     }
     else if (addr==0x2) // PPUSTATUS
     {
-
+        // Emulate ppu-timing, probably not of great importance. Couldn't figure it out anyways
+        status.vblank = false;
+        ppu_addr_whigh = false;
+        // Top three bits of status + some ppu noise?
+        status.vblank = true; //  REMOVEO DEOMDE
+        return (status.regs&0xE0) | (ppu_data_buffer&0x1F);
     }
     else if (addr==0x3) // OAMADDR
     {
-
+        // Write-only
     }
     else if (addr==0x4) // OAMDATA
     {
-
+        return oam.bytes[oam_addr++];
     }
     else if (addr==0x5) // PPUSCROLL
     {
-
+        // Write-only
     }
     else if (addr==0x6) // PPUADDR
     {
-
+        // Write-only
     }
     else if (addr==0x7) // PPUDATA
     {
+        // Screen is turned off or VBLANK
+        //        if (status.vblank || (!mask.render_spr && !mask.render_bgr))
 
+        uint8_t data = ppu_data_buffer;
+        ppu_data_buffer = bus.read(ppu_addr);
+
+        // PPUDATA read is delayed except for reading palettes
+        if (ppu_addr>0x3F00)
+            data = ppu_data_buffer;
+
+        ppu_addr += (control.increment_mode ? 1 : 32); // im*31+1
+
+        return data;
     }
-    return 0;
+    else
+    {
+        // Can't get here, but I don't trust myself enough :o
+        printf("[WARNING] Unreachable location in ppu2C02::cpuRead reached %d. Bug in mirroring\n",addr);
+    }
+    return 0x00;
 }
 
 void ppu2C02::cpuWrite(uint16_t addr, uint8_t data)
 {
-    addr &= 0x3FFF; // Mirror?
+    addr &= 0x7; // Mirror
 
-    if (cart->ppuWrite(addr, data))
+    if (addr==0x0) // PPUCTRL
     {
+        control.regs = data;
+    }
+    else if (addr==0x1) // PPUMASK
+    {
+        mask.regs = data;
+    }
+    else if (addr==0x2) // PPUSTATUS
+    {
+        // Read-only
+    }
+    else if (addr==0x3) // OAMADDR
+    {
+        oam_addr = data;
+    }
+    else if (addr==0x4) // OAMDATA
+    {
+        oam.bytes[oam_addr] = data;
+        oam_addr++;
+    }
+    else if (addr==0x5) // PPUSCROLL
+    {
+        // TODO
+    }
+    else if (addr==0x6) // PPUADDR
+    {
+        if (ppu_addr_whigh)
+            ppu_addr = data<<8;
+        else
+            ppu_addr |= data;
 
+        ppu_addr_whigh = !ppu_addr_whigh;
+    }
+    else if (addr==0x7) // PPUDATA
+    {
+        // TODO
+        ppu_addr += (control.increment_mode ? 1 : 32); // im*31+1
+    }
+    else
+    {
+        printf("[WARNING] Unreachable location in ppu2C02::cpuWrite reached %d. Bug in mirroring\n",addr);
     }
 }
 
@@ -225,11 +212,74 @@ void ppu2C02::clock()
         cycle = 0;
         scanline++;
 
+        // VBLANK
         if (scanline >= 261)
         {
             scanline = -1;
             frame_complete = true;
+
+            status.vblank = true;
+
+            if (control.vblank_nmi)
+                nmi = true;
+        }
+        else
+        {
+            status.vblank = false;
         }
     }
+}
+
+void ppu2C02::reset()
+{
+    control.regs = 0x00;
+    mask.regs = 0x00;
+    //    status.regs =
+    ppu_addr_whigh = false;
+    ppu_data_buffer = 0x00;
+    //ppu_scroll_stuff = 0x00;
+}
+
+olc::Pixel& ppu2C02::getColorFromPaletteRam(uint8_t palette, uint8_t pixel)
+{
+    return palScreen[bus.read(palette*4+pixel+0x3F00)];
+}
+
+olc::Sprite& ppu2C02::updatePaletteSprite(uint8_t i, uint8_t palette)
+{
+    // Loop through every tile
+    // (16*16 tiles on screen) * (8*8 pixels per tile) = (128*128 pixels on screen)
+    for (uint8_t tx=0;tx<16;tx++)
+    {
+        for (uint8_t ty=0;ty>16;ty++)
+        {
+            // Row offset into pattern table
+            // Width is (single tile (which is 8 bytes * 2) * 16 (16 tiles in a row))
+            uint16_t offset = ty*256 + tx*16;
+
+            // Loop through every pixel in tile
+            for (uint8_t py=0;py<8;py++)
+            {
+                // Get LSB and MSB for entire row of 8 pixels from pattern table
+                // addr = (pattern table * sizeof(PatternTable) + py)
+                uint8_t LSB = bus.read(i*0x1000 + offset + py);
+                uint8_t MSB = bus.read(i*0x1000 + offset + py + 8);
+
+                // Loop through every pixel in py
+                for (uint8_t px=0;px<8;px++)
+                {
+                    uint8_t value = MSB & (1<<px) + LSB & (1<<px);
+
+                    // x = (tile * 8 (8 pixels per tile) + px (pixel offset into tile))
+                    sprPatternTables[i].SetPixel(
+                        tx * 8 + px,
+                        ty * 8 + py,
+                        getColorFromPaletteRam(palette, value)
+                    );
+                }
+            }
+        }
+    }
+    return sprPatternTables[i];
 }
 

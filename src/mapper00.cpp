@@ -1,7 +1,7 @@
 
 #include "mapper00.h"
-#include <iostream>
-#include "helper.h"
+//#include <iostream>
+//#include "helper.h"
 
 
 Mapper00::Mapper00(uint8_t p, uint8_t c) : Mapper(p, c)

@@ -11,29 +11,85 @@ PPUBus::~PPUBus()
 
 }
 
-// Shouldn't have two reads for ppu and ppubus so need to figure stuff out
+// Read from PPU's OWN BUS. Not to be confused with normal bus
+// BUT if cartridge's mapper desides that the address is on the cartridge,
+// then it will read from the cartridge instead of the PPU's bus
 uint8_t PPUBus::read(uint16_t addr)
 {
-    // Read pattern
-    if (addr >= 0x0000 && addr <= 0x1FFF)
+    uint8_t data = 0x00;
+
+    // Cartridge checks if addr is to be mapped
+    if (cart->ppuRead(addr, &data))
     {
-        return ((uint8_t*)&patterns)[addr];
+
+    }
+    // Read pattern
+    else if (0x0000 <= addr && addr <= 0x1FFF)
+    {
+        data = patternTable[addr>0x0FFF][addr&0x3FF];
     }
     // Read nametable
-    else if (addr >= 0x2000 && addr <= 0x2FFF)
+    else if (0x2000 <= addr && addr <= 0x3EFF)
     {
-        return ((uint8_t*)&nametables)[addr-0x2000];
+        if (cart->mirror == Cartridge::MIRROR::HORIZONTAL)
+        {
+            if (0x2000 <= addr && addr <= 0x23FF)
+                return nametables[0][addr&0x03FF];
+
+            if (0x2400 <= addr && addr <= 0x27FF)
+                return nametables[0][addr&0x03FF];
+
+            if (0x2800 <= addr && addr <= 0x2BFF)
+                return nametables[1][addr&0x03FF];
+
+            if (0x2C00 <= addr && addr <= 0x2FFF)
+                return nametables[1][addr&0x03FF];
+
+        else if (cart->mirror == Cartridge::MIRROR::VERTICAL)
+        {
+            if (0x2000 <= addr && addr <= 0x23FF)
+                return nametables[0][addr&0x03FF];
+
+            if (0x2400 <= addr && addr <= 0x27FF)
+                return nametables[1][addr&0x03FF];
+
+            if (0x2800 <= addr && addr <= 0x2BFF)
+                return nametables[0][addr&0x03FF];
+
+            if (0x2C00 <= addr && addr <= 0x2FFF)
+                return nametables[1][addr&0x03FF];
+
+        }
+    }
+    // Read palette RAM
+    else if (0x3F00 <= addr && addr <= 0x3F1F)
+    {
+        data = palette[addr-0x3F00];
     }
 
-    return 0x00;
+    return data;
 }
 
+// Write to PPU's OWN BUS, OR write somewhere in cartridge
 void PPUBus::write(uint16_t addr, uint8_t data)
 {
-    if (addr >= 0x0000 && addr <= 0x1FFF)
+    if (cart->ppuWrite(addr, data))
     {
-        //ram[addr&0x07FF] = data;
+
     }
+    else if (0x0000 <= addr && addr <= 0x1FFF)
+    {
+        patternTable[addr>0x0FFF][addr&0x3FF] = data;
+    }
+    else if (0x2000 <= addr && addr <= 0x3EFF)
+    {
+        nametables[addr>0x23FF][(addr-0x2000)&0x1EFE] = data;
+    }
+    else if (0x3F00 <= addr && addr <= 0x3F1F)
+    {
+        palette[addr-0x3F00] = data;
+    }
+
 }
 
 void PPUBus::insertCartridge(const std::shared_ptr<Cartridge>& cartridge)

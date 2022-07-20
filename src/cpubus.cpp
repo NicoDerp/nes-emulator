@@ -2,7 +2,7 @@
 #include <cstring>
 #include <iostream>
 #include "cpubus.h"
-#include "helper.h"
+//#include "helper.h"
 
 CPUBus::CPUBus()
 {
@@ -64,6 +64,7 @@ void CPUBus::insertCartridge(const std::shared_ptr<Cartridge>& cartridge)
 void CPUBus::reset()
 {
     cpu.reset();
+    ppu.reset();
     systemClockCount = 0;
 }
 
@@ -76,6 +77,11 @@ void CPUBus::clock()
         ppu.clock();
         //  printf("PPU CLOCK!\n");
         systemClockCount = 0;
+    }
+    if (ppu.nmi)
+    {
+        ppu.nmi = false;
+        cpu.nmi();
     }
 }
 

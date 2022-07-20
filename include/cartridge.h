@@ -9,6 +9,12 @@
 
 #include "mapper00.h"
 
+enum MIRROR
+{
+    HORIZONTAL,
+    VERTICAL
+};
+
 class Cartridge
 {
 public:
@@ -19,7 +25,7 @@ private:
     std::vector<uint8_t> prg_rom;
     std::vector<uint8_t> chr_rom;
 
-    bool mirror;
+    enum MIRROR mirror;
     uint8_t mapperID;
     uint8_t prgBanks;
     uint8_t chrBanks;

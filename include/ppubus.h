@@ -1,20 +1,7 @@
 #pragma once
 
-#include <array>
 #include <memory>
 #include "cartridge.h"
-
-struct Tile
-{
-    uint8_t bits0;
-    uint8_t bits1;
-};
-
-struct Nametable
-{
-    uint8_t cells[960];
-    uint8_t attrs[64];
-};
 
 class PPUBus
 {
@@ -28,10 +15,10 @@ public:
     //ppu2C02* ppu;
 
     // Patterns
-    struct Tile patterns[512];
+    uint8_t patternTable[2][4096];
 
     // Nametables
-    struct Nametable nametables[2];
+    uint8_t nametables[2][1024];
 
     // Palette
     uint8_t palette[32];
@@ -39,10 +26,11 @@ public:
     // Cartridge
     std::shared_ptr<Cartridge> cart;
 
-// Functions
+// Bus operations
 public:
 	uint8_t read(uint16_t addr);
 	void write(uint16_t addr, uint8_t data);
 
+public:
     void insertCartridge(const std::shared_ptr<Cartridge>& cartridge);
 };

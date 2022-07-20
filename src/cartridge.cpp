@@ -59,7 +59,7 @@ Cartridge::Cartridge(const std::string& filename)
     file.close();
 
     mapperID = (header.flags7&0xF0)|(header.flags6>>4);
-    mirror = header.flags6&0x1;
+    mirror = (header.flags6&0x1) ? VERTICAL : HORIZONTAL;
 
     if (mapperID == 0x00)
         mapper = new Mapper00(prgBanks, chrBanks);

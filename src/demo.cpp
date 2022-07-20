@@ -126,18 +126,21 @@ public:
         {
             nes.cpu.reset();
         }
+        else if (GetKey(olc::Key::P).bPressed)
+        {
+            ++selectedPalette &= 0x7;
+        }
 
         DrawCpu(520, 2);
-
-        DrawString(520, 350, "CLOCK COUNT");
-        DrawString(520, 360, std::to_string(nes.cpu.clockCount));
+        DrawCode(520, 200, 26);
 
         //        DrawPage(2, 2, 0x00, 16);
         //DrawPage(2, 182, 0x80, 16);
 
-        DrawSprite(0, 0, &nes.ppu.getScreen(), 2);
+        DrawSprite(516, 348, &nes.ppu.updatePaletteSprite(0, selectedPalette));
+        DrawSprite(648, 348, &nes.ppu.updatePaletteSprite(1, selectedPalette));
 
-        DrawCode(520, 200, 26);
+        DrawSprite(0, 0, &nes.ppu.getScreen(), 2);
 
         //        DrawString(10, 370, "SPACE = Step Instruction   F = Complete Single Frame    R = Reset");
 
@@ -148,6 +151,7 @@ private:
     CPUBus nes;
     std::shared_ptr<Cartridge> cart;
     std::map<uint16_t, std::string> asmMap;
+    uint8_t selectedPalette = 0;
 };
 
 int main()
