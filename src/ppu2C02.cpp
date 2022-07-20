@@ -203,7 +203,7 @@ void ppu2C02::cpuWrite(uint16_t addr, uint8_t data)
     {
         //printf("CALLING BUS::WRITE(0x%s, 0x%s)\n",hex(ppu_addr,4).c_str(),hex(data,2).c_str());
         bus.write(ppu_addr, data);
-        ppu_addr += (control.increment_mode ? 1 : 32); // im*31+1
+        ppu_addr += (control.increment_mode ? 32 : 1); // im*31+1
     }
     else
     {
@@ -267,7 +267,7 @@ olc::Sprite& ppu2C02::updatePaletteSprite(uint8_t i, uint8_t palette)
     // (16*16 tiles on screen) * (8*8 pixels per tile) = (128*128 pixels on screen)
     for (uint8_t tx=0;tx<16;tx++)
     {
-        for (uint8_t ty=0;ty>16;ty++)
+        for (uint8_t ty=0;ty<16;ty++)
         {
             // Row offset into pattern table
             // Width is (single tile (which is 8 bytes * 2) * 16 (16 tiles in a row))
@@ -284,7 +284,13 @@ olc::Sprite& ppu2C02::updatePaletteSprite(uint8_t i, uint8_t palette)
                 // Loop through every pixel in py
                 for (uint8_t px=0;px<8;px++)
                 {
-                    uint8_t value = MSB & (1<<px) + LSB & (1<<px);
+                    // 0010 0111
+                    // 1010 1010
+                    //
+                    // 0000 1000
+                    // px = 3
+                    uint8_t mask = 1 << (8-px);
+                    uint8_t value = (uint8_t)((MSB & mask) >> (8-px)) + (uint8_t)((LSB & mask) >> (8-px));
 
                     // x = (tile * 8 (8 pixels per tile) + px (pixel offset into tile))
                     sprPatternTables[i].SetPixel(

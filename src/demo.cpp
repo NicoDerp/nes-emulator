@@ -151,13 +151,13 @@ public:
         }
 
         // Directly copied from javidx9
-        const int swatchSize = 6;
-        for (int p=0;p<8;p++) // Each palette
-            for (int s=0;s<4;s++) // Each index
-                FillRect(516+p*swatchSize*5+s*swatchSize, 340,
-                         swatchSize, swatchSize, nes.ppu.getColorFromPaletteRam(p,s));
+		const int nSwatchSize = 6;
+		for (int p = 0; p < 8; p++) // For each palette
+			for(int s = 0; s < 4; s++) // For each index
+				FillRect(516 + p * (nSwatchSize * 5) + s * nSwatchSize, 340,
+					nSwatchSize, nSwatchSize, nes.ppu.getColorFromPaletteRam(p, s));
 
-        DrawRect(516+selectedPalette*swatchSize*5-1,339,swatchSize*4,swatchSize,olc::WHITE);
+        DrawRect(516 + selectedPalette * (nSwatchSize * 5) - 1, 339, (nSwatchSize * 4), nSwatchSize, olc::WHITE);
 
         DrawCpu(520, 2);
         DrawCode(520, 200, 26);

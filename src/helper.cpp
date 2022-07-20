@@ -9,3 +9,12 @@ std::string hex(uint32_t n, uint8_t d)
     return s;
 };
 
+void print_binary(int number, int num_digits) {
+    printf("0b");
+    int digit;
+    for(digit = num_digits - 1; digit >= 0; digit--) {
+        printf("%c", number & (1 << digit) ? '1' : '0');
+    }
+    printf("\n");
+};
+
