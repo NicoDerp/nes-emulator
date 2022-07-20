@@ -1,12 +1,13 @@
 
 #include "ppu2C02.h"
+#include "helper.h"
 
 
 ppu2C02::ppu2C02()
 {
     // Clear stuff just in case
     memset((uint8_t*)bus.patternTable, 0, sizeof(sizeof(bus.patternTable)));
-    memset(bus.nametables.bytes, 0, sizeof(bus.nametables));
+    memset((uint8_t*)bus.nametables, 0, sizeof(bus.nametables));
     memset(bus.palette, 0, sizeof(bus.palette));
     memset(oam.bytes, 0, sizeof(oam));
 
@@ -85,7 +86,7 @@ ppu2C02::~ppu2C02()
 
 }
 
-uint8_t ppu2C02::cpuRead(uint16_t addr)
+uint8_t ppu2C02::cpuRead(uint16_t addr, bool rdonly)
 {
     addr &= 0x7; // Mirror
 
@@ -99,12 +100,20 @@ uint8_t ppu2C02::cpuRead(uint16_t addr)
     }
     else if (addr==0x2) // PPUSTATUS
     {
+        if (rdonly)
+            return 0x00;
+
         // Emulate ppu-timing, probably not of great importance. Couldn't figure it out anyways
         status.vblank = false;
-        ppu_addr_whigh = false;
+        ppu_addr_latch = false;
+
+        status.vblank = true; // TODO: REMOVE
+
+        uint8_t tmp = (status.regs&0xE0) | (ppu_data_buffer&0x1F);
+        status.vblank = false;
+
         // Top three bits of status + some ppu noise?
-        status.vblank = true; //  REMOVEO DEOMDE
-        return (status.regs&0xE0) | (ppu_data_buffer&0x1F);
+        return tmp;
     }
     else if (addr==0x3) // OAMADDR
     {
@@ -124,6 +133,9 @@ uint8_t ppu2C02::cpuRead(uint16_t addr)
     }
     else if (addr==0x7) // PPUDATA
     {
+        if (rdonly)
+            return 0x00;
+
         // Screen is turned off or VBLANK
         //        if (status.vblank || (!mask.render_spr && !mask.render_bgr))
 
@@ -177,16 +189,20 @@ void ppu2C02::cpuWrite(uint16_t addr, uint8_t data)
     }
     else if (addr==0x6) // PPUADDR
     {
-        if (ppu_addr_whigh)
-            ppu_addr = data<<8;
-        else
+        if (ppu_addr_latch)
             ppu_addr |= data;
+        else
+            ppu_addr = data<<8;
 
-        ppu_addr_whigh = !ppu_addr_whigh;
+        if (ppu_addr_latch)
+            printf("PPUADDR: 0x%s\n",hex(ppu_addr,4).c_str());
+
+        ppu_addr_latch = !ppu_addr_latch;
     }
     else if (addr==0x7) // PPUDATA
     {
-        // TODO
+        //printf("CALLING BUS::WRITE(0x%s, 0x%s)\n",hex(ppu_addr,4).c_str(),hex(data,2).c_str());
+        bus.write(ppu_addr, data);
         ppu_addr += (control.increment_mode ? 1 : 32); // im*31+1
     }
     else
@@ -203,7 +219,7 @@ void ppu2C02::insertCartridge(const std::shared_ptr<Cartridge>& cartridge)
 
 void ppu2C02::clock()
 {
-    sprScreen.SetPixel(cycle-1, scanline, palScreen[(rand()%2) ? 0x3F : 0x30]);
+    //sprScreen.SetPixel(cycle-1, scanline, palScreen[(rand()%2) ? 0x3F : 0x30]);
     // x
     cycle++;
     if (cycle >= 341)
@@ -235,14 +251,14 @@ void ppu2C02::reset()
     control.regs = 0x00;
     mask.regs = 0x00;
     //    status.regs =
-    ppu_addr_whigh = false;
+    ppu_addr_latch = false;
     ppu_data_buffer = 0x00;
     //ppu_scroll_stuff = 0x00;
 }
 
 olc::Pixel& ppu2C02::getColorFromPaletteRam(uint8_t palette, uint8_t pixel)
 {
-    return palScreen[bus.read(palette*4+pixel+0x3F00)];
+    return palScreen[bus.read((palette<<2)+pixel+0x3F00)&0x3F];
 }
 
 olc::Sprite& ppu2C02::updatePaletteSprite(uint8_t i, uint8_t palette)

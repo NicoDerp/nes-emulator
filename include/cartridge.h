@@ -6,14 +6,9 @@
 #include <cstring>
 #include <string>
 #include <fstream>
+#include <memory>
 
 #include "mapper00.h"
-
-enum MIRROR
-{
-    HORIZONTAL,
-    VERTICAL
-};
 
 class Cartridge
 {
@@ -25,14 +20,19 @@ private:
     std::vector<uint8_t> prg_rom;
     std::vector<uint8_t> chr_rom;
 
-    enum MIRROR mirror;
     uint8_t mapperID;
     uint8_t prgBanks;
     uint8_t chrBanks;
 
     bool imageValid_ = false;
+    std::unique_ptr<Mapper> mapper;
 
-    Mapper* mapper;
+public:
+    enum MIRROR
+    {
+        HORIZONTAL,
+        VERTICAL
+    } mirror;
 
 public:
     bool imageValid();

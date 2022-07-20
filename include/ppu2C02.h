@@ -24,7 +24,7 @@ public:
 
 public:
     // When the CPU reads or writes to the mapped PPU registers
-    uint8_t cpuRead(uint16_t addr);
+    uint8_t cpuRead(uint16_t addr, bool rdonly=false);
     void cpuWrite(uint16_t addr, uint8_t data);
 
 public:
@@ -40,7 +40,7 @@ public:
     olc::Sprite& getScreen() { return sprScreen; };
     olc::Pixel& getColorFromPaletteRam(uint8_t palette, uint8_t pixel);
     olc::Sprite& updatePaletteSprite(uint8_t i, uint8_t palette);
-
+    PPUBus bus;
 
 public:
     // If the current frame is complete
@@ -50,7 +50,6 @@ public:
     bool nmi;
 
 private:
-    PPUBus bus;
 
     int16_t cycle = 0;
     int16_t scanline = 0;
@@ -62,7 +61,7 @@ private:
     } oam;
     uint8_t oam_addr;
 
-    bool ppu_addr_whigh = false;
+    bool ppu_addr_latch = false;
     uint8_t ppu_data_buffer = 0x00;
     uint16_t ppu_addr = 0x0000;
 

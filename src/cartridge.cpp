@@ -62,7 +62,7 @@ Cartridge::Cartridge(const std::string& filename)
     mirror = (header.flags6&0x1) ? VERTICAL : HORIZONTAL;
 
     if (mapperID == 0x00)
-        mapper = new Mapper00(prgBanks, chrBanks);
+        mapper = std::unique_ptr<Mapper>(new Mapper00(prgBanks, chrBanks));
     else
     {
         printf("[ERROR] Unknown mapper 0x%s. Probably coming soon...", hex(mapperID,2).c_str());
@@ -96,7 +96,6 @@ bool Cartridge::cpuRead(uint16_t addr, uint8_t* data)
         return false;
 
     *data = prg_rom[mapped_addr];
-    //printf("CART::CPUREAD: 0x%s: 0x%s\n",hex(addr,4).c_str(),hex(*data,2).c_str());
 
     return true;
 }

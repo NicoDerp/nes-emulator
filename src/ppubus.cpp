@@ -1,5 +1,6 @@
 #include <cstring>
 #include "ppubus.h"
+#include "helper.h"
 
 PPUBus::PPUBus()
 {
@@ -44,7 +45,7 @@ uint8_t PPUBus::read(uint16_t addr)
 
             if (0x2C00 <= addr && addr <= 0x2FFF)
                 return nametables[1][addr&0x03FF];
-
+        }
         else if (cart->mirror == Cartridge::MIRROR::VERTICAL)
         {
             if (0x2000 <= addr && addr <= 0x23FF)
@@ -83,11 +84,38 @@ void PPUBus::write(uint16_t addr, uint8_t data)
     }
     else if (0x2000 <= addr && addr <= 0x3EFF)
     {
-        nametables[addr>0x23FF][(addr-0x2000)&0x1EFE] = data;
+        if (cart->mirror == Cartridge::MIRROR::HORIZONTAL)
+        {
+            if (0x2000 <= addr && addr <= 0x23FF)
+                nametables[0][addr&0x03FF] = data;
+
+            if (0x2400 <= addr && addr <= 0x27FF)
+                nametables[0][addr&0x03FF] = data;
+
+            if (0x2800 <= addr && addr <= 0x2BFF)
+                nametables[1][addr&0x03FF] = data;
+
+            if (0x2C00 <= addr && addr <= 0x2FFF)
+                nametables[1][addr&0x03FF] = data;
+        }
+        else if (cart->mirror == Cartridge::MIRROR::VERTICAL)
+        {
+            if (0x2000 <= addr && addr <= 0x23FF)
+                nametables[0][addr&0x03FF] = data;
+
+            if (0x2400 <= addr && addr <= 0x27FF)
+                nametables[1][addr&0x03FF] = data;
+
+            if (0x2800 <= addr && addr <= 0x2BFF)
+                nametables[0][addr&0x03FF] = data;
+
+            if (0x2C00 <= addr && addr <= 0x2FFF)
+                nametables[1][addr&0x03FF] = data;
+        }
     }
-    else if (0x3F00 <= addr && addr <= 0x3F1F)
+    else if (0x3F00 <= addr && addr <= 0x3FFF)
     {
-        palette[addr-0x3F00] = data;
+        palette[addr&0x1F] = data;
     }
 
 }

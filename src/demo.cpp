@@ -96,7 +96,19 @@ public:
 
     bool OnUserUpdate(float fElapsedTime) override
     {
+        totalElapsedTime += fElapsedTime;
+
         Clear(olc::DARK_GREY);
+
+        if (running)
+        {
+            if (totalElapsedTime >= (1.0f/60.0f))
+            {
+                do {nes.clock();} while (!nes.ppu.frame_complete);
+                nes.ppu.frame_complete = false;
+                totalElapsedTime = 0.0f;
+            }
+        }
 
         if (GetKey(olc::Key::ESCAPE).bPressed)
         {
@@ -104,12 +116,15 @@ public:
         }
         else if (GetKey(olc::Key::SPACE).bPressed)
         {
-            do { nes.clock(); }
-            while (!nes.cpu.complete());
+            //            for (uint8_t n=0;n<1;n++)
+            //            {
+                do { nes.clock(); }
+                while (!nes.cpu.complete());
 
-            // Not sure why
-            do { nes.clock(); }
-            while (nes.cpu.complete());
+                // Not sure why
+                do { nes.clock(); }
+                while (nes.cpu.complete());
+                //            }
 
         }
         else if (GetKey(olc::Key::F).bPressed)
@@ -130,6 +145,19 @@ public:
         {
             ++selectedPalette &= 0x7;
         }
+        else if (GetKey(olc::Key::T).bPressed)
+        {
+            running = !running;
+        }
+
+        // Directly copied from javidx9
+        const int swatchSize = 6;
+        for (int p=0;p<8;p++) // Each palette
+            for (int s=0;s<4;s++) // Each index
+                FillRect(516+p*swatchSize*5+s*swatchSize, 340,
+                         swatchSize, swatchSize, nes.ppu.getColorFromPaletteRam(p,s));
+
+        DrawRect(516+selectedPalette*swatchSize*5-1,339,swatchSize*4,swatchSize,olc::WHITE);
 
         DrawCpu(520, 2);
         DrawCode(520, 200, 26);
@@ -142,6 +170,14 @@ public:
 
         DrawSprite(0, 0, &nes.ppu.getScreen(), 2);
 
+        for (uint8_t y=0x00;y<30;y++)
+        {
+            for (uint8_t x=0x00;x<32;x++)
+            {
+                DrawString(x*16,y*16,hex((uint32_t)nes.ppu.bus.nametables[0][y*32+x],2));
+            }
+        }
+
         //        DrawString(10, 370, "SPACE = Step Instruction   F = Complete Single Frame    R = Reset");
 
         return true;
@@ -152,6 +188,8 @@ private:
     std::shared_ptr<Cartridge> cart;
     std::map<uint16_t, std::string> asmMap;
     uint8_t selectedPalette = 0;
+    bool running=false;
+    float totalElapsedTime=0.0f;
 };
 
 int main()
