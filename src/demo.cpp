@@ -100,20 +100,17 @@ public:
 
         if (running)
         {
-            //if (totalElapsedTime >= (1.0f/60.0f))
-            //{
-            //    do {nes.clock();} while (!nes.ppu.frame_complete);
-            //    nes.ppu.frame_complete = false;
-            //    totalElapsedTime = 0.0f;
-            //}
-            //            if (totalElapsedTime >= (1.0f/500.0f))
-            //{
-            for (uint8_t n=0;n<50;n++)
+            if (totalElapsedTime >= (1.0f/60.0f))
             {
-                do {nes.clock();} while (!nes.cpu.complete());
+                do {nes.clock();} while (!nes.ppu.frame_complete);
+                nes.ppu.frame_complete = false;
+                totalElapsedTime = 0.0f;
             }
-            //totalElapsedTime = 0.0f;
-                //}
+
+            //for (uint8_t n=0;n<50;n++)
+            //{
+            //    do {nes.clock();} while (!nes.cpu.complete());
+            //}
         }
 
         if (GetKey(olc::Key::ESCAPE).bPressed)
@@ -176,7 +173,10 @@ public:
         {
             for (uint8_t x=0x00;x<32;x++)
             {
-                DrawString(x*16,y*16,hex((uint32_t)nes.ppu.bus.nametables[0][y*32+x],2));
+                uint8_t id = (uint32_t)nes.ppu.bus.nametables[0][y*32+x];
+                //                DrawString(x*16,y*16,hex((uint32_t)nes.ppu.bus.nametables[0][y*32+x],2));
+                DrawPartialSprite(x*16,y*16,&nes.ppu.updatePaletteSprite(0,selectedPalette),
+                                  (id&0x0F)<<3,((id>>4)&0x0F)<<3,8,8,2);
             }
         }
 
