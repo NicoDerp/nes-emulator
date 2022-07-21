@@ -52,7 +52,7 @@ public:
     bool OnUserCreate() override
     {
         // Load the cartridge
-        cart = std::make_shared<Cartridge>("nestest.nes");
+        cart = std::make_shared<Cartridge>("DonkeyKong.nes");
 
         // Check if the image is valid
         if (!cart->imageValid())
@@ -169,13 +169,14 @@ public:
 
         DrawSprite(0, 0, &nes.ppu.getScreen(), 2);
 
+        olc::Sprite& s = nes.ppu.updatePaletteSprite(1, selectedPalette);
         for (uint8_t y=0x00;y<30;y++)
         {
             for (uint8_t x=0x00;x<32;x++)
             {
                 uint8_t id = (uint32_t)nes.ppu.bus.nametables[0][y*32+x];
                 //                DrawString(x*16,y*16,hex((uint32_t)nes.ppu.bus.nametables[0][y*32+x],2));
-                DrawPartialSprite(x*16,y*16,&nes.ppu.updatePaletteSprite(0,selectedPalette),
+                DrawPartialSprite(x*16,y*16,&s,
                                   (id&0x0F)<<3,((id>>4)&0x0F)<<3,8,8,2);
             }
         }
