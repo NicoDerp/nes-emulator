@@ -63,7 +63,6 @@ private:
 
     bool ppu_addr_latch = false;
     uint8_t ppu_data_buffer = 0x00;
-    uint16_t ppu_addr = 0x0000;
 
     //    uint8_t ppu_scroll_x, scroll_y;
 
@@ -72,7 +71,8 @@ private:
     {
         struct
         {
-            uint8_t nametable_addr:2;
+            uint8_t nametable_x:1;
+            uint8_t nametable_y:1;
             bool increment_mode:1;
             bool spr_pattern_addr:1;
             bool bgr_pattern_addr:1;
@@ -81,7 +81,7 @@ private:
             bool vblank_nmi:1;
         };
 
-        uint8_t regs;
+        uint8_t reg;
     } control;
 
     // Some flags
@@ -95,7 +95,7 @@ private:
             bool vblank:1;
         };
 
-        uint8_t regs;
+        uint8_t reg;
     } status;
 
     // PPUMASK
@@ -113,8 +113,40 @@ private:
             bool enhance_blu:1;
         };
 
-        uint8_t regs;
+        uint8_t reg;
     } mask;
+
+    union LoopyRegister
+    {
+        // Credit to Loopy
+        struct
+        {
+            uint16_t coarse_x:5;
+            uint16_t coarse_y:5;
+            uint16_t nametable_x:1;
+            uint16_t nametable_y:1;
+            uint16_t fine_y:3;
+            uint16_t unused:1;
+        };
+
+        uint16_t reg = 0x0000;
+    };
+
+    union LoopyRegister vram_addr;
+    union LoopyRegister tram_addr;
+
+    uint8_t fine_x = 0x00;
+
+
+    uint8_t bg_next_id = 0x00;
+    uint8_t bg_next_attr = 0x00;
+    uint8_t bg_next_lsb = 0x00;
+    uint8_t bg_next_msb = 0x00;
+
+    uint16_t bg_shifter_pat_low = 0x0000;
+    uint16_t bg_shifter_pat_high = 0x0000;
+    uint16_t bg_shifter_attr_low = 0x0000;
+    uint16_t bg_shifter_attr_high = 0x0000;
 
     std::shared_ptr<Cartridge> cart;
 

@@ -63,9 +63,9 @@ uint8_t PPUBus::read(uint16_t addr)
         }
     }
     // Read palette RAM
-    else if (0x3F00 <= addr && addr <= 0x3F1F)
+    else if (0x3F00 <= addr && addr <= 0x3FFF)
     {
-        data = palette[addr-0x3F00];
+        data = palette[addr&0x1F];
     }
 
     return data;
@@ -80,7 +80,8 @@ void PPUBus::write(uint16_t addr, uint8_t data)
     }
     else if (0x0000 <= addr && addr <= 0x1FFF)
     {
-        patternTable[addr>0x0FFF][addr&0x3FF] = data;
+        // 0x03FF
+        patternTable[addr>0x0FFF][addr&0x0FFF] = data;
     }
     else if (0x2000 <= addr && addr <= 0x3EFF)
     {
@@ -115,7 +116,13 @@ void PPUBus::write(uint16_t addr, uint8_t data)
     }
     else if (0x3F00 <= addr && addr <= 0x3FFF)
     {
-        palette[addr&0x1F] = data;
+        // Not mine just testing
+        addr &= 0x1F;
+        if (addr == 0x0010) addr = 0x0000;
+		if (addr == 0x0014) addr = 0x0004;
+		if (addr == 0x0018) addr = 0x0008;
+		if (addr == 0x001C) addr = 0x000C;
+        palette[addr] = data;
     }
 
 }

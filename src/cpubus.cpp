@@ -20,7 +20,7 @@ CPUBus::~CPUBus()
 
 }
 
-uint8_t CPUBus::read(uint16_t addr)
+uint8_t CPUBus::read(uint16_t addr, bool rdonly)
 {
     uint8_t data = 0x00;
     if (cart->cpuRead(addr, &data))
@@ -33,7 +33,7 @@ uint8_t CPUBus::read(uint16_t addr)
     }
     else if (addr >= 0x2000 && addr <= 0x3FFF)
     {
-        data = ppu.cpuRead(addr);
+        data = ppu.cpuRead(addr, rdonly);
     }
 
     return data;

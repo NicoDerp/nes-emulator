@@ -90,26 +90,33 @@ uint8_t ppu2C02::cpuRead(uint16_t addr, bool rdonly)
 {
     addr &= 0x7; // Mirror
 
+    // For all readonly stuff. It reads even though it's an write-only adress.
+    // Thats because rdonly is pretty much only for debug so it's okay
+
     if (addr==0x0) // PPUCTRL
     {
         // Write-only
+        if (rdonly)
+            return control.reg;
     }
     else if (addr==0x1) // PPUMASK
     {
         // Write-only
+        if (rdonly)
+            return mask.reg;
     }
     else if (addr==0x2) // PPUSTATUS
     {
         if (rdonly)
-            return 0x00;
+            return status.reg;
 
         // Emulate ppu-timing, probably not of great importance. Couldn't figure it out anyways
         status.vblank = false;
         ppu_addr_latch = false;
 
-        status.vblank = true; // TODO: REMOVE
+        //status.vblank = true; // TODO: REMOVE
 
-        uint8_t tmp = (status.regs&0xE0) | (ppu_data_buffer&0x1F);
+        uint8_t tmp = (status.reg&0xE0) | (ppu_data_buffer&0x1F);
         status.vblank = false;
 
         // Top three bits of status + some ppu noise?
@@ -140,13 +147,13 @@ uint8_t ppu2C02::cpuRead(uint16_t addr, bool rdonly)
         //        if (status.vblank || (!mask.render_spr && !mask.render_bgr))
 
         uint8_t data = ppu_data_buffer;
-        ppu_data_buffer = bus.read(ppu_addr);
+        ppu_data_buffer = bus.read(vram_addr.reg);
 
         // PPUDATA read is delayed except for reading palettes
-        if (ppu_addr>0x3F00)
+        if (vram_addr.reg>0x3F00)
             data = ppu_data_buffer;
 
-        ppu_addr += (control.increment_mode ? 1 : 32); // im*31+1
+        vram_addr.reg += (control.increment_mode ? 1 : 32); // im*31+1
 
         return data;
     }
@@ -164,11 +171,13 @@ void ppu2C02::cpuWrite(uint16_t addr, uint8_t data)
 
     if (addr==0x0) // PPUCTRL
     {
-        control.regs = data;
+        control.reg = data;
+        tram_addr.nametable_x = control.nametable_x;
+        tram_addr.nametable_y = control.nametable_y;
     }
     else if (addr==0x1) // PPUMASK
     {
-        mask.regs = data;
+        mask.reg = data;
     }
     else if (addr==0x2) // PPUSTATUS
     {
@@ -176,33 +185,55 @@ void ppu2C02::cpuWrite(uint16_t addr, uint8_t data)
     }
     else if (addr==0x3) // OAMADDR
     {
-        oam_addr = data;
+        // TODO
+        //oam_addr = data;
     }
     else if (addr==0x4) // OAMDATA
     {
-        oam.bytes[oam_addr] = data;
-        oam_addr++;
+        // TODO
+        //oam.bytes[oam_addr] = data;
+        //oam_addr++;
     }
     else if (addr==0x5) // PPUSCROLL
     {
-        // TODO
+        // First write is x, second is y
+        // Then split x and y into coarse and fine
+        if (ppu_addr_latch)
+        {
+            // Write y
+            tram_addr.fine_y = data & 0x07;
+            tram_addr.coarse_y = data >> 3;
+        }
+        else
+        {
+            // Write x
+            fine_x = data & 0x07;
+            tram_addr.coarse_x = data >> 3;
+        }
+
+        ppu_addr_latch = !ppu_addr_latch;
     }
     else if (addr==0x6) // PPUADDR
     {
         if (ppu_addr_latch)
-            ppu_addr |= data;
+        {
+            // Write low (this is second)
+            tram_addr.reg |= data;
+                //vram_addr.reg = tram_addr.reg;
+            vram_addr = tram_addr;
+        }
         else
-            ppu_addr = data<<8;
-
-        //if (ppu_addr_latch)
-        //    printf("PPUADDR: 0x%s\n",hex(ppu_addr,4).c_str());
+        {
+            // Write high (this is first)
+            tram_addr.reg = (uint16_t)(((data&0x3F)<<8) | (tram_addr.reg & 0x00FF));
+        }
 
         ppu_addr_latch = !ppu_addr_latch;
     }
     else if (addr==0x7) // PPUDATA
     {
-        bus.write(ppu_addr, data);
-        ppu_addr += (control.increment_mode ? 32 : 1); // im*31+1
+        bus.write(vram_addr.reg, data);
+        vram_addr.reg += (control.increment_mode ? 32 : 1); // im*31+1
     }
     else
     {
@@ -219,24 +250,198 @@ void ppu2C02::insertCartridge(const std::shared_ptr<Cartridge>& cartridge)
 void ppu2C02::clock()
 {
     //sprScreen.SetPixel(cycle-1, scanline, palScreen[(rand()%2) ? 0x3F : 0x30]);
-    //    sprScreen.SetPixel(cycle-1, scanline, palScreen[getColorFromPaletteRam()]);
-    // x
 
-    //printf("NMI ON FRAME COMPLETE: %d\n", control.vblank_nmi);
-
-    // VBLANK!
-    if (scanline >= 241 && scanline < 261)
+    // (https://www.nesdev.org/wiki/PPU_scrolling)
+    // The visible frames
+    if (scanline >= -1 && scanline <= 239)
     {
-        // END OF FRAME!!
-        if (scanline == 241 && cycle == 1)
+        if (scanline == 0 && cycle == 0)
         {
-            status.vblank = true;
-
-            if (control.vblank_nmi)
-                nmi = true;
+            // Odd-frame skipped?
+            cycle = 1;
         }
 
+        // Pre-render line!
+        // Clear VBLANK
+        if (scanline == -1 && cycle == 1)
+        {
+            status.vblank = false;
+        }
+
+        // Fetch tile info
+        if ((2 <= cycle && cycle <= 257) || (321 <= cycle && cycle <= 336))
+        {
+            if (mask.render_bgr)
+            {
+                bg_shifter_pat_low <<= 1;
+                bg_shifter_pat_high <<= 1;
+                bg_shifter_attr_low <<= 1;
+                bg_shifter_attr_high <<= 1;
+            }
+
+            // NT byte
+            if ((cycle&0x07) == 1)
+            {
+                bg_shifter_pat_low = (bg_shifter_pat_low & 0xFF00) | bg_next_lsb;
+                bg_shifter_pat_high = (bg_shifter_pat_high & 0xFF00) | bg_next_msb;
+                bg_shifter_attr_low = (bg_shifter_attr_low & 0xFF00) | ((bg_next_attr & 0b01) ? 0xFF : 0x00);
+                bg_shifter_attr_high = (bg_shifter_attr_high & 0xFF00) | ((bg_next_attr & 0b01) ? 0xFF : 0x00);
+
+                bg_next_id = bus.read(0x2000 | (vram_addr.reg & 0x0FFF));
+                //printf("%d, %d\n", vram_addr.reg&0x0FFF, bg_next_id);
+            }
+
+            // AT byte
+            if ((cycle&0x07) == 3)
+            {
+                bg_next_attr = bus.read(0x23C0
+                                        | (vram_addr.nametable_y << 11)
+                                        | (vram_addr.nametable_x << 10)
+                                        | ((vram_addr.coarse_y >> 2) << 3)
+                                        | (vram_addr.coarse_x >> 2));
+                //printf("ATTR: %d\n", bg_next_attr);
+                if (vram_addr.coarse_x&0x02)
+                    bg_next_attr >>= 2;
+
+                if (vram_addr.coarse_y&0x02)
+                    bg_next_attr >>= 4;
+
+                bg_next_attr &= 0x03;
+            }
+
+            // Low BG tile byte
+            if ((cycle&0x07) == 5)
+            {
+                bg_next_lsb = bus.read((control.bgr_pattern_addr << 12)
+                                       + ((uint16_t)bg_next_id << 4)
+                                       + (vram_addr.fine_y));
+            }
+
+            // High BG tile byte
+            if ((cycle&0x07) == 7)
+            {
+                bg_next_msb = bus.read((control.bgr_pattern_addr << 12)
+                                       + ((uint16_t)bg_next_id << 4)
+                                       + (vram_addr.fine_y) + 8);
+            }
+
+            // Inc hori(v)
+            if ((cycle&0x07) == 8)
+            {
+                if (mask.render_bgr || mask.render_spr)
+                {
+                    // If overflow toggle bit 10 (nametable_x)
+                    if (vram_addr.coarse_x == 31)
+                    {
+                        vram_addr.nametable_x = ~vram_addr.nametable_x;
+                        vram_addr.coarse_x = 0;
+                    }
+                    else
+                    {
+                        vram_addr.coarse_x++;
+                    }
+                }
+            }
+        }
     }
+
+    // End of scanline, increment y
+    if (cycle == 256 && (mask.render_bgr || mask.render_spr))
+    {
+        // If overflow increment coarse_y
+        if (vram_addr.fine_y > 0x7)
+        {
+            // If overflow toggle bit 10 (nametable_x)
+            if (vram_addr.coarse_y == 29)
+            {
+                vram_addr.nametable_y = ~vram_addr.nametable_y;
+                vram_addr.coarse_y = 0;
+            }
+            // End of nametable, beginning of attribute memory.
+            // Wrap around
+            else if (vram_addr.coarse_y == 31)
+            {
+                vram_addr.coarse_y = 0;
+            }
+            else
+            {
+                vram_addr.coarse_y++;
+            }
+
+            vram_addr.fine_y = 0;
+        }
+        else
+        {
+            vram_addr.fine_y++;
+        }
+    }
+
+    if (cycle == 257 && (mask.render_bgr || mask.render_spr))
+    {
+        vram_addr.coarse_x = tram_addr.coarse_x;
+        vram_addr.nametable_x = tram_addr.nametable_x;
+
+        bg_shifter_pat_low = (bg_shifter_pat_low & 0xFF00) | bg_next_lsb;
+        bg_shifter_pat_high = (bg_shifter_pat_high & 0xFF00) | bg_next_msb;
+        bg_shifter_attr_low = (bg_shifter_attr_low & 0xFF00) | ((bg_next_attr & 0b01) ? 0xFF : 0x00);
+        bg_shifter_attr_high = (bg_shifter_attr_high & 0xFF00) | ((bg_next_attr & 0b01) ? 0xFF : 0x00);
+
+    }
+
+    if (scanline == -1 && 280 <= cycle && cycle <= 304)
+    {
+        vram_addr.fine_y = tram_addr.fine_y;
+        vram_addr.coarse_y = tram_addr.coarse_y;
+        vram_addr.nametable_y = tram_addr.nametable_y;
+    }
+
+    if (cycle == 337 || cycle == 339)
+    {
+        // Unused NT fetches (?)
+        bg_next_id = bus.read(0x2000 | (vram_addr.reg & 0x0FFF));
+    }
+
+    if (scanline == 240)
+    {
+        // Nothing happens
+        // Post-render line!
+    }
+
+    // VBLANK
+    if (scanline == 241 && cycle == 1)
+    {
+        status.vblank = true;
+
+        if (control.vblank_nmi)
+            nmi = true;
+    }
+
+
+
+    // Get the palette and pattern stuff
+    uint8_t bg_pixel = 0x00;
+    uint8_t bg_palette = 0x00;
+
+    if (mask.render_bgr)
+    {
+        // Default the MSB of the shifter.
+        // But the fine_x can control an extra offset
+        // So MSB >> fine_x
+        uint16_t bitmask = (1 << 15) >> fine_x;
+
+        // > 0 to not have to bitshift >> 15.
+        // But that works too
+        uint8_t p0_pixel = (bg_shifter_pat_low & bitmask) > 0;
+        uint8_t p1_pixel = (bg_shifter_pat_high & bitmask) > 0;
+        bg_pixel = (p1_pixel << 1) | p0_pixel;
+
+        uint8_t bg_pal0 = (bg_shifter_attr_low & bitmask) > 0;
+        uint8_t bg_pal1 = (bg_shifter_attr_high & bitmask) > 0;
+        bg_palette = (bg_pal1 << 1) | bg_pal0;
+    }
+
+    // Finally!!! Draw
+    sprScreen.SetPixel(cycle-1, scanline, getColorFromPaletteRam(bg_palette, bg_pixel));
 
     cycle++;
     if (cycle >= 341)
@@ -256,12 +461,30 @@ void ppu2C02::clock()
 
 void ppu2C02::reset()
 {
-    control.regs = 0x00;
-    mask.regs = 0x00;
-    status.regs = 0x00;
+    control.reg = 0x00;
+    mask.reg = 0x00;
+    status.reg = 0x00;
     ppu_addr_latch = false;
     ppu_data_buffer = 0x00;
-    //ppu_scroll_stuff = 0x00;
+
+    vram_addr.reg = 0x0000;
+    tram_addr.reg = 0x0000;
+
+    cycle = 0;
+    scanline = 0;
+
+    fine_x = 0x00;
+
+    bg_next_id = 0x00;
+    bg_next_attr = 0x00;
+    bg_next_lsb = 0x00;
+    bg_next_msb = 0x00;
+
+    bg_shifter_pat_low = 0x0000;
+    bg_shifter_pat_high = 0x0000;
+    bg_shifter_attr_low = 0x0000;
+    bg_shifter_attr_high = 0x0000;
+
 }
 
 olc::Pixel& ppu2C02::getColorFromPaletteRam(uint8_t palette, uint8_t pixel)
@@ -298,7 +521,7 @@ olc::Sprite& ppu2C02::updatePaletteSprite(uint8_t i, uint8_t palette)
                     // 0000 1000
                     // px = 3
                     uint8_t mask = 1 << (8-px);
-                    uint8_t value = (uint8_t)((MSB & mask) >> (8-px)) + (uint8_t)((LSB & mask) >> (8-px));
+                    uint8_t value = (uint8_t)((MSB & mask) > 0)<<1 | (uint8_t)((LSB & mask) > 0);
 
                     // x = (tile * 8 (8 pixels per tile) + px (pixel offset into tile))
                     sprPatternTables[i].SetPixel(

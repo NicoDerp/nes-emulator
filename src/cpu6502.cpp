@@ -40,9 +40,9 @@ cpu6502::~cpu6502()
 
 }
 
-uint8_t cpu6502::read(uint16_t addr)
+uint8_t cpu6502::read(uint16_t addr, bool rdonly)
 {
-    return bus->read(addr);
+    return bus->read(addr, rdonly);
 }
 
 void cpu6502::write(uint16_t addr, uint8_t data)
@@ -60,7 +60,7 @@ std::map<uint16_t, std::string> cpu6502::disassemble(uint16_t start, uint16_t en
     while (addr<=(uint32_t)end)
     {
         line = addr;
-        opcode = read(addr++);
+        opcode = read(addr++, true);
 
         std::string s = "$"+hex(addr-1,4)+"    "+lookup[opcode].name+" ";
 
