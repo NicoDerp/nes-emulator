@@ -935,7 +935,6 @@ uint8_t cpu6502::RTS()
 {
     uint8_t low = pop();
     uint8_t high = pop();
-    printf("EMULATING RTS. PC WAS 0x%s, now 0x%s\n", hex(pc,4).c_str(), hex((high<<8)|low,4).c_str());
     pc = (high << 8) | low;
     return 0;
 }

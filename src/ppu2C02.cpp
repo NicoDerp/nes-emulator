@@ -164,8 +164,6 @@ void ppu2C02::cpuWrite(uint16_t addr, uint8_t data)
 
     if (addr==0x0) // PPUCTRL
     {
-        if (data & (1<<7))
-            printf("VBLANK_NMI SET!\n");
         control.regs = data;
     }
     else if (addr==0x1) // PPUMASK
@@ -196,8 +194,8 @@ void ppu2C02::cpuWrite(uint16_t addr, uint8_t data)
         else
             ppu_addr = data<<8;
 
-        if (ppu_addr_latch)
-            printf("PPUADDR: 0x%s\n",hex(ppu_addr,4).c_str());
+        //if (ppu_addr_latch)
+        //    printf("PPUADDR: 0x%s\n",hex(ppu_addr,4).c_str());
 
         ppu_addr_latch = !ppu_addr_latch;
     }
