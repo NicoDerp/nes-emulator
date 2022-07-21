@@ -592,15 +592,15 @@ uint8_t cpu6502::BPL()
 
 uint8_t cpu6502::BRK()
 {
-    pc++;
+    //pc++;
 
-    setFlag(I, 1);
     push((pc>>8)&0x00FF); // High byte
     push(pc&0x00FF); // Low byte
 
     setFlag(B, 1);
     push(status);
     setFlag(B, 0);
+    setFlag(I, 1);
 
     uint8_t low = read(0xFFFE);
     uint8_t high = read(0xFFFF);
@@ -755,9 +755,9 @@ uint8_t cpu6502::JMP()
 
 uint8_t cpu6502::JSR()
 {
-    pc = addr_abs;
     push((pc>>8)&0x00FF); // High byte
     push(pc&0x00FF); // Low byte
+    pc = addr_abs;
     return 0;
 }
 
@@ -935,6 +935,7 @@ uint8_t cpu6502::RTS()
 {
     uint8_t low = pop();
     uint8_t high = pop();
+    printf("EMULATING RTS. PC WAS 0x%s, now 0x%s\n", hex(pc,4).c_str(), hex((high<<8)|low,4).c_str());
     pc = (high << 8) | low;
     return 0;
 }

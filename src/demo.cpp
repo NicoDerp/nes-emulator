@@ -109,7 +109,9 @@ public:
             //            if (totalElapsedTime >= (1.0f/500.0f))
             //{
             for (uint8_t n=0;n<50;n++)
+            {
                 do {nes.clock();} while (!nes.cpu.complete());
+            }
             //totalElapsedTime = 0.0f;
                 //}
         }
