@@ -88,6 +88,8 @@ ppu2C02::~ppu2C02()
 
 uint8_t ppu2C02::cpuRead(uint16_t addr, bool rdonly)
 {
+    uint8_t data = 0x00;
+
     addr &= 0x7; // Mirror
 
     // For all readonly stuff. It reads even though it's an write-only adress.
@@ -97,18 +99,18 @@ uint8_t ppu2C02::cpuRead(uint16_t addr, bool rdonly)
     {
         // Write-only
         if (rdonly)
-            return control.reg;
+            data = control.reg;
     }
     else if (addr==0x1) // PPUMASK
     {
         // Write-only
         if (rdonly)
-            return mask.reg;
+            data = mask.reg;
     }
     else if (addr==0x2) // PPUSTATUS
     {
         if (rdonly)
-            return status.reg;
+            data = status.reg;
 
         // Emulate ppu-timing, probably not of great importance. Couldn't figure it out anyways
         status.vblank = false;
@@ -116,11 +118,10 @@ uint8_t ppu2C02::cpuRead(uint16_t addr, bool rdonly)
 
         status.vblank = true; // TODO: REMOVE
 
-        uint8_t tmp = (status.reg&0xE0) | (ppu_data_buffer&0x1F);
+        // Top three bits of status + some ppu noise?
+        data = (status.reg&0xE0) | (ppu_data_buffer&0x1F);
         status.vblank = false;
 
-        // Top three bits of status + some ppu noise?
-        return tmp;
     }
     else if (addr==0x3) // OAMADDR
     {
@@ -128,7 +129,8 @@ uint8_t ppu2C02::cpuRead(uint16_t addr, bool rdonly)
     }
     else if (addr==0x4) // OAMDATA
     {
-        return oam.bytes[oam_addr++];
+        // TODO
+        //data = oam.bytes[oam_addr++];
     }
     else if (addr==0x5) // PPUSCROLL
     {
@@ -140,29 +142,27 @@ uint8_t ppu2C02::cpuRead(uint16_t addr, bool rdonly)
     }
     else if (addr==0x7) // PPUDATA
     {
-        if (rdonly)
-            return 0x00;
+        if (!rdonly)
+        {
+            // Screen is turned off or VBLANK
+            //        if (status.vblank || (!mask.render_spr && !mask.render_bgr))
 
-        // Screen is turned off or VBLANK
-        //        if (status.vblank || (!mask.render_spr && !mask.render_bgr))
-
-        uint8_t data = ppu_data_buffer;
-        ppu_data_buffer = bus.read(vram_addr.reg);
-
-        // PPUDATA read is delayed except for reading palettes
-        if (vram_addr.reg>0x3F00)
             data = ppu_data_buffer;
+            ppu_data_buffer = bus.read(vram_addr.reg);
 
-        vram_addr.reg += (control.increment_mode ? 1 : 32); // im*31+1
+            // PPUDATA read is delayed except for reading palettes
+            if (vram_addr.reg >= 0x3F00)
+                data = ppu_data_buffer;
 
-        return data;
+            vram_addr.reg += (control.increment_mode ? 1 : 32); // im*31+1
+        }
     }
     else
     {
         // Can't get here, but I don't trust myself enough :o
         printf("[WARNING] Unreachable location in ppu2C02::cpuRead reached %d. Bug in mirroring\n",addr);
     }
-    return 0x00;
+    return data;
 }
 
 void ppu2C02::cpuWrite(uint16_t addr, uint8_t data)
@@ -252,7 +252,7 @@ void ppu2C02::clock()
     //sprScreen.SetPixel(cycle-1, scanline, palScreen[(rand()%2) ? 0x3F : 0x30]);
 
     // (https://www.nesdev.org/wiki/PPU_scrolling)
-    // The visible frames
+    // The visible scanlines (including Pre-render line which is not visible)
     if (scanline >= -1 && scanline <= 239)
     {
         if (scanline == 0 && cycle == 0)
@@ -261,33 +261,17 @@ void ppu2C02::clock()
             cycle = 1;
         }
 
-        // Inc hori(v)
-        if ((cycle&0x07) == 0)
-        {
-            if (mask.render_bgr || mask.render_spr)
-            {
-                // If overflow toggle bit 10 (nametable_x)
-                if (vram_addr.coarse_x == 31)
-                {
-                    vram_addr.nametable_x = ~vram_addr.nametable_x;
-                    vram_addr.coarse_x = 0;
-                }
-                else
-                {
-                    vram_addr.coarse_x++;
-                }
-            }
-        }
-
         // Pre-render line!
-        // Clear VBLANK
-        if (scanline == -1 && cycle == 1)
+        if (scanline == -1)
         {
-            status.vblank = false;
+            // Clear VBLANK
+            if (cycle == 1)
+                status.vblank = false;
         }
 
-        // Fetch tile info
-        if ((2 <= cycle && cycle <= 257) || (321 <= cycle && cycle <= 336))
+        // (Include NT fetch at 257?)
+        // Fetch next tile info    (257)
+        if ((2 <= cycle && cycle <= 256) || (321 <= cycle && cycle <= 336))
         {
             if (mask.render_bgr)
             {
@@ -295,6 +279,24 @@ void ppu2C02::clock()
                 bg_shifter_pat_high <<= 1;
                 bg_shifter_attr_low <<= 1;
                 bg_shifter_attr_high <<= 1;
+            }
+
+            // Inc hori(v) (even in cycle 256 vert(v))
+            if ((cycle&0x07) == 0)
+            {
+                if (mask.render_bgr || mask.render_spr)
+                {
+                    // If overflow toggle bit 10 (nametable_x)
+                    if (vram_addr.coarse_x == 31)
+                    {
+                        vram_addr.nametable_x = ~vram_addr.nametable_x;
+                        vram_addr.coarse_x = 0;
+                    }
+                    else
+                    {
+                        vram_addr.coarse_x++;
+                    }
+                }
             }
 
             // NT byte
@@ -306,7 +308,6 @@ void ppu2C02::clock()
                 bg_shifter_attr_high = (bg_shifter_attr_high & 0xFF00) | ((bg_next_attr & 0b01) ? 0xFF : 0x00);
 
                 bg_next_id = bus.read(0x2000 | (vram_addr.reg & 0x0FFF));
-                //printf("%d, %d\n", vram_addr.reg&0x0FFF, bg_next_id);
             }
 
             // AT byte
@@ -350,9 +351,9 @@ void ppu2C02::clock()
     if (cycle == 256 && (mask.render_bgr || mask.render_spr))
     {
         // If overflow increment coarse_y
-        if (vram_addr.fine_y > 0x7)
+        if (vram_addr.fine_y >= 0x7)
         {
-            // If overflow toggle bit 10 (nametable_x)
+            // If overflow toggle bit 10 (nametable_y)
             if (vram_addr.coarse_y == 29)
             {
                 vram_addr.nametable_y = ~vram_addr.nametable_y;
@@ -378,10 +379,13 @@ void ppu2C02::clock()
     }
 
     // hori(v) = hori(t)
-    if (cycle == 257 && (mask.render_bgr || mask.render_spr))
+    if (cycle == 257)
     {
-        vram_addr.coarse_x = tram_addr.coarse_x;
-        vram_addr.nametable_x = tram_addr.nametable_x;
+        if (mask.render_bgr || mask.render_spr)
+        {
+            vram_addr.coarse_x = tram_addr.coarse_x;
+            vram_addr.nametable_x = tram_addr.nametable_x;
+        }
 
         bg_shifter_pat_low = (bg_shifter_pat_low & 0xFF00) | bg_next_lsb;
         bg_shifter_pat_high = (bg_shifter_pat_high & 0xFF00) | bg_next_msb;
@@ -390,6 +394,7 @@ void ppu2C02::clock()
 
     }
 
+    // vert(v) = vert(t)
     if (scanline == -1 && 280 <= cycle && cycle <= 304)
     {
         vram_addr.fine_y = tram_addr.fine_y;
@@ -397,10 +402,17 @@ void ppu2C02::clock()
         vram_addr.nametable_y = tram_addr.nametable_y;
     }
 
+    // Unused NT fetches (?)
     if (cycle == 337 || cycle == 339)
     {
-        // Unused NT fetches (?)
+        // Should it update shifters?? Don't think so
+        //bg_shifter_pat_low = (bg_shifter_pat_low & 0xFF00) | bg_next_lsb;
+        //bg_shifter_pat_high = (bg_shifter_pat_high & 0xFF00) | bg_next_msb;
+        //bg_shifter_attr_low = (bg_shifter_attr_low & 0xFF00) | ((bg_next_attr & 0b01) ? 0xFF : 0x00);
+        //bg_shifter_attr_high = (bg_shifter_attr_high & 0xFF00) | ((bg_next_attr & 0b01) ? 0xFF : 0x00);
+
         bg_next_id = bus.read(0x2000 | (vram_addr.reg & 0x0FFF));
+
     }
 
     if (scanline == 240)
