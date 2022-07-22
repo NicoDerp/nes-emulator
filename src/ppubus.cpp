@@ -35,31 +35,30 @@ uint8_t PPUBus::read(uint16_t addr)
         if (cart->mirror == Cartridge::MIRROR::HORIZONTAL)
         {
             if (0x2000 <= addr && addr <= 0x23FF)
-                return nametables[0][addr&0x03FF];
+                data = nametables[0][addr&0x03FF];
 
             if (0x2400 <= addr && addr <= 0x27FF)
-                return nametables[0][addr&0x03FF];
+                data = nametables[0][addr&0x03FF];
 
             if (0x2800 <= addr && addr <= 0x2BFF)
-                return nametables[1][addr&0x03FF];
+                data = nametables[1][addr&0x03FF];
 
             if (0x2C00 <= addr && addr <= 0x2FFF)
-                return nametables[1][addr&0x03FF];
+                data = nametables[1][addr&0x03FF];
         }
         else if (cart->mirror == Cartridge::MIRROR::VERTICAL)
         {
             if (0x2000 <= addr && addr <= 0x23FF)
-                return nametables[0][addr&0x03FF];
+                data = nametables[0][addr&0x03FF];
 
             if (0x2400 <= addr && addr <= 0x27FF)
-                return nametables[1][addr&0x03FF];
+                data = nametables[1][addr&0x03FF];
 
             if (0x2800 <= addr && addr <= 0x2BFF)
-                return nametables[0][addr&0x03FF];
+                data = nametables[0][addr&0x03FF];
 
             if (0x2C00 <= addr && addr <= 0x2FFF)
-                return nametables[1][addr&0x03FF];
-
+                data = nametables[1][addr&0x03FF];
         }
     }
     // Read palette RAM
@@ -117,12 +116,12 @@ void PPUBus::write(uint16_t addr, uint8_t data)
     else if (0x3F00 <= addr && addr <= 0x3FFF)
     {
         // Not mine just testing
-        addr &= 0x1F;
-        if (addr == 0x0010) addr = 0x0000;
-		if (addr == 0x0014) addr = 0x0004;
-		if (addr == 0x0018) addr = 0x0008;
-		if (addr == 0x001C) addr = 0x000C;
-        palette[addr] = data;
+        //addr &= 0x1F;
+        //if (addr == 0x0010) addr = 0x0000;
+		//if (addr == 0x0014) addr = 0x0004;
+		//if (addr == 0x0018) addr = 0x0008;
+		//if (addr == 0x001C) addr = 0x000C;
+        palette[addr&0x1F] = data;
     }
 
 }

@@ -114,7 +114,7 @@ uint8_t ppu2C02::cpuRead(uint16_t addr, bool rdonly)
         status.vblank = false;
         ppu_addr_latch = false;
 
-        //status.vblank = true; // TODO: REMOVE
+        status.vblank = true; // TODO: REMOVE
 
         uint8_t tmp = (status.reg&0xE0) | (ppu_data_buffer&0x1F);
         status.vblank = false;
@@ -257,8 +257,26 @@ void ppu2C02::clock()
     {
         if (scanline == 0 && cycle == 0)
         {
-            // Odd-frame skipped?
+            // Odd-frame skipped
             cycle = 1;
+        }
+
+        // Inc hori(v)
+        if ((cycle&0x07) == 0)
+        {
+            if (mask.render_bgr || mask.render_spr)
+            {
+                // If overflow toggle bit 10 (nametable_x)
+                if (vram_addr.coarse_x == 31)
+                {
+                    vram_addr.nametable_x = ~vram_addr.nametable_x;
+                    vram_addr.coarse_x = 0;
+                }
+                else
+                {
+                    vram_addr.coarse_x++;
+                }
+            }
         }
 
         // Pre-render line!
@@ -324,27 +342,10 @@ void ppu2C02::clock()
                                        + ((uint16_t)bg_next_id << 4)
                                        + (vram_addr.fine_y) + 8);
             }
-
-            // Inc hori(v)
-            if ((cycle&0x07) == 8)
-            {
-                if (mask.render_bgr || mask.render_spr)
-                {
-                    // If overflow toggle bit 10 (nametable_x)
-                    if (vram_addr.coarse_x == 31)
-                    {
-                        vram_addr.nametable_x = ~vram_addr.nametable_x;
-                        vram_addr.coarse_x = 0;
-                    }
-                    else
-                    {
-                        vram_addr.coarse_x++;
-                    }
-                }
-            }
         }
     }
 
+    // Inc vert(v)
     // End of scanline, increment y
     if (cycle == 256 && (mask.render_bgr || mask.render_spr))
     {
@@ -376,6 +377,7 @@ void ppu2C02::clock()
         }
     }
 
+    // hori(v) = hori(t)
     if (cycle == 257 && (mask.render_bgr || mask.render_spr))
     {
         vram_addr.coarse_x = tram_addr.coarse_x;
