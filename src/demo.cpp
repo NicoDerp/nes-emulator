@@ -213,28 +213,26 @@ public:
         DrawCpu(520, 2);
         DrawCode(520, 200, 26);
 
-        DrawPage(2, 2, 0x00);
+        //DrawPage(2, 2, 0x00);
         //DrawPage(2, 182, 0x80);
-        DrawStack(2, 200, 10);
+        //DrawStack(2, 200, 10);
 
         DrawSprite(516, 348, &nes.ppu.updatePaletteSprite(0, selectedPalette));
         DrawSprite(648, 348, &nes.ppu.updatePaletteSprite(1, selectedPalette));
 
-        //DrawSprite(0, 0, &nes.ppu.getScreen(), 2);
+        DrawSprite(0, 0, &nes.ppu.getScreen(), 2);
 
-        /*
-        olc::Sprite& s = nes.ppu.updatePaletteSprite(0, selectedPalette);
-        for (uint8_t y=0x00;y<30;y++)
-        {
-            for (uint8_t x=0x00;x<32;x++)
-            {
-                uint8_t id = (uint32_t)nes.ppu.bus.nametables[0][y*32+x];
-                //                DrawString(x*16,y*16,hex((uint32_t)nes.ppu.bus.nametables[0][y*32+x],2));
-                DrawPartialSprite(x*16,y*16,&s,
-                                  (id&0x0F)<<3,((id>>4)&0x0F)<<3,8,8,2);
-            }
-        }
-        */
+        //olc::Sprite& s = nes.ppu.updatePaletteSprite(0, selectedPalette);
+        //for (uint8_t y=0x00;y<30;y++)
+        //{
+        //    for (uint8_t x=0x00;x<32;x++)
+        //    {
+        //        uint8_t id = (uint32_t)nes.ppu.bus.nametables[0][y*32+x];
+        //        DrawString(x*16,y*16,hex((uint32_t)nes.ppu.bus.nametables[0][y*32+x],2));
+        //        //DrawPartialSprite(x*16,y*16,&s,
+        //        //                  (id&0x0F)<<3,((id>>4)&0x0F)<<3,8,8,2);
+        //    }
+        //}
 
         return true;
     }

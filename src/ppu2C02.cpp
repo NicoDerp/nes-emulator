@@ -115,7 +115,7 @@ uint8_t ppu2C02::cpuRead(uint16_t addr, bool rdonly)
         }
         else
         {
-            printf("VBLANK CLEARED\n");
+            //printf("VBLANK CLEARED\n");
             //printf("REG: %d, VBLANK: %s\n", status.reg&0xE0, (status.vblank ? "TRUE" : "FALSE"));
             // Top three bits of status + some ppu noise
             data = (status.reg&0xE0) | (ppu_data_buffer&0x1F);
@@ -253,7 +253,7 @@ void ppu2C02::insertCartridge(const std::shared_ptr<Cartridge>& cartridge)
 
 void ppu2C02::clock()
 {
-    printf("1(%d, %d): %d\n", cycle, scanline, status.vblank);
+    //printf("1(%d, %d): %d\n", cycle, scanline, status.vblank);
     //sprScreen.SetPixel(cycle-1, scanline, palScreen[(rand()%2) ? 0x3F : 0x30]);
 
     // (https://www.nesdev.org/wiki/PPU_scrolling)
@@ -432,7 +432,7 @@ void ppu2C02::clock()
     // VBLANK
     if (scanline == 241 && cycle == 1)
     {
-        printf("VBLANK ON\n");
+        // printf("VBLANK ON\n");
         status.vblank = true;
 
         if (control.vblank_nmi)
@@ -480,7 +480,7 @@ void ppu2C02::clock()
             frame_complete = true;
         }
     }
-    printf("2(%d, %d): %d\n", cycle, scanline, status.vblank);
+    //printf("2(%d, %d): %d\n", cycle, scanline, status.vblank);
 }
 
 void ppu2C02::reset()

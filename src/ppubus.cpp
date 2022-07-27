@@ -32,32 +32,34 @@ uint8_t PPUBus::read(uint16_t addr)
     // Read nametable
     else if (0x2000 <= addr && addr <= 0x3EFF)
     {
+        uint8_t i = ((addr-0x2000)/0x0400)%3;
         if (cart->mirror == Cartridge::MIRROR::HORIZONTAL)
         {
-            if (0x2000 <= addr && addr <= 0x23FF)
+            // Mirrors
+            if (i == 0)
                 data = nametables[0][addr&0x03FF];
 
-            if (0x2400 <= addr && addr <= 0x27FF)
+            if (i == 1)
                 data = nametables[0][addr&0x03FF];
 
-            if (0x2800 <= addr && addr <= 0x2BFF)
+            if (i == 2)
                 data = nametables[1][addr&0x03FF];
 
-            if (0x2C00 <= addr && addr <= 0x2FFF)
+            if (i == 3)
                 data = nametables[1][addr&0x03FF];
         }
         else if (cart->mirror == Cartridge::MIRROR::VERTICAL)
         {
-            if (0x2000 <= addr && addr <= 0x23FF)
+            if (i == 0)
                 data = nametables[0][addr&0x03FF];
 
-            if (0x2400 <= addr && addr <= 0x27FF)
+            if (i == 1)
                 data = nametables[1][addr&0x03FF];
 
-            if (0x2800 <= addr && addr <= 0x2BFF)
+            if (i == 2)
                 data = nametables[0][addr&0x03FF];
 
-            if (0x2C00 <= addr && addr <= 0x2FFF)
+            if (i == 3)
                 data = nametables[1][addr&0x03FF];
         }
     }
@@ -84,32 +86,35 @@ void PPUBus::write(uint16_t addr, uint8_t data)
     }
     else if (0x2000 <= addr && addr <= 0x3EFF)
     {
+        // For correct mirroring
+        uint8_t i = ((addr-0x2000)/0x0400)%3;
         if (cart->mirror == Cartridge::MIRROR::HORIZONTAL)
         {
-            if (0x2000 <= addr && addr <= 0x23FF)
+            // Mirrors
+            if (i == 0)
                 nametables[0][addr&0x03FF] = data;
 
-            if (0x2400 <= addr && addr <= 0x27FF)
+            if (i == 1)
                 nametables[0][addr&0x03FF] = data;
 
-            if (0x2800 <= addr && addr <= 0x2BFF)
+            if (i == 2)
                 nametables[1][addr&0x03FF] = data;
 
-            if (0x2C00 <= addr && addr <= 0x2FFF)
+            if (i == 3)
                 nametables[1][addr&0x03FF] = data;
         }
         else if (cart->mirror == Cartridge::MIRROR::VERTICAL)
         {
-            if (0x2000 <= addr && addr <= 0x23FF)
+            if (i == 0)
                 nametables[0][addr&0x03FF] = data;
 
-            if (0x2400 <= addr && addr <= 0x27FF)
+            if (i == 1)
                 nametables[1][addr&0x03FF] = data;
 
-            if (0x2800 <= addr && addr <= 0x2BFF)
+            if (i == 2)
                 nametables[0][addr&0x03FF] = data;
 
-            if (0x2C00 <= addr && addr <= 0x2FFF)
+            if (i == 3)
                 nametables[1][addr&0x03FF] = data;
         }
     }
