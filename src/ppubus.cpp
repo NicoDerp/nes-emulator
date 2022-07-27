@@ -126,6 +126,7 @@ void PPUBus::write(uint16_t addr, uint8_t data)
 		//if (addr == 0x0014) addr = 0x0004;
 		//if (addr == 0x0018) addr = 0x0008;
 		//if (addr == 0x001C) addr = 0x000C;
+        //palette[addr] = data;
         palette[addr&0x1F] = data;
     }
 

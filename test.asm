@@ -9,21 +9,27 @@
 RESET:
     sei
     cld
-    lda #$7F
-    jsr sub
-    lda #$00
+    lda #$10
+    sta $F0
+    lda #$81
+    sta $F1
+
+    jmp [$00F0]
 
 loop:
     jmp loop
 
-sub:
-    adc #$11
-    ldx #$FF
-    rts
-
 NMI:
     inc $00
     rti
+
+  .org $8110
+label:
+    lda #$DE
+    sta $00
+    lda #$AD
+    sta $01
+    jmp loop
 
   .bank 1
   .org $FFFA
