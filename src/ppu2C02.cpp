@@ -110,17 +110,19 @@ uint8_t ppu2C02::cpuRead(uint16_t addr, bool rdonly)
     else if (addr==0x2) // PPUSTATUS
     {
         if (rdonly)
+        {
             data = status.reg;
+        }
+        else
+        {
+            printf("VBLANK CLEARED\n");
+            //printf("REG: %d, VBLANK: %s\n", status.reg&0xE0, (status.vblank ? "TRUE" : "FALSE"));
+            // Top three bits of status + some ppu noise
+            data = (status.reg&0xE0) | (ppu_data_buffer&0x1F);
 
-        // Emulate ppu-timing, probably not of great importance. Couldn't figure it out anyways
-        status.vblank = false;
-        ppu_addr_latch = false;
-
-        status.vblank = true; // TODO: REMOVE
-
-        // Top three bits of status + some ppu noise?
-        data = (status.reg&0xE0) | (ppu_data_buffer&0x1F);
-        status.vblank = false;
+            status.vblank = false;
+            ppu_addr_latch = false;
+        }
 
     }
     else if (addr==0x3) // OAMADDR
@@ -198,34 +200,36 @@ void ppu2C02::cpuWrite(uint16_t addr, uint8_t data)
     {
         // First write is x, second is y
         // Then split x and y into coarse and fine
-        if (ppu_addr_latch)
-        {
-            // Write y
-            tram_addr.fine_y = data & 0x07;
-            tram_addr.coarse_y = data >> 3;
-        }
-        else
+        if (ppu_addr_latch == 0)
         {
             // Write x
             fine_x = data & 0x07;
             tram_addr.coarse_x = data >> 3;
+        }
+        else
+        {
+
+            // Write y
+            tram_addr.fine_y = data & 0x07;
+            tram_addr.coarse_y = data >> 3;
+
         }
 
         ppu_addr_latch = !ppu_addr_latch;
     }
     else if (addr==0x6) // PPUADDR
     {
-        if (ppu_addr_latch)
-        {
-            // Write low (this is second)
-            tram_addr.reg |= data;
-                //vram_addr.reg = tram_addr.reg;
-            vram_addr = tram_addr;
-        }
-        else
+        if (ppu_addr_latch == 0)
         {
             // Write high (this is first)
             tram_addr.reg = (uint16_t)(((data&0x3F)<<8) | (tram_addr.reg & 0x00FF));
+        }
+        else
+        {
+            // Write low (this is second)
+            tram_addr.reg |= data;
+            vram_addr.reg = tram_addr.reg;
+            //vram_addr = tram_addr;
         }
 
         ppu_addr_latch = !ppu_addr_latch;
@@ -249,6 +253,7 @@ void ppu2C02::insertCartridge(const std::shared_ptr<Cartridge>& cartridge)
 
 void ppu2C02::clock()
 {
+    printf("1(%d, %d): %d\n", cycle, scanline, status.vblank);
     //sprScreen.SetPixel(cycle-1, scanline, palScreen[(rand()%2) ? 0x3F : 0x30]);
 
     // (https://www.nesdev.org/wiki/PPU_scrolling)
@@ -266,7 +271,10 @@ void ppu2C02::clock()
         {
             // Clear VBLANK
             if (cycle == 1)
+            {
+                //printf("NOT VBALNK\n");
                 status.vblank = false;
+            }
         }
 
         // (Include NT fetch at 257?)
@@ -395,7 +403,7 @@ void ppu2C02::clock()
     }
 
     // vert(v) = vert(t)
-    if (scanline == -1 && 280 <= cycle && cycle <= 304)
+    if ((scanline == -1) && (280 <= cycle && cycle <= 304))
     {
         vram_addr.fine_y = tram_addr.fine_y;
         vram_addr.coarse_y = tram_addr.coarse_y;
@@ -424,6 +432,7 @@ void ppu2C02::clock()
     // VBLANK
     if (scanline == 241 && cycle == 1)
     {
+        printf("VBLANK ON\n");
         status.vblank = true;
 
         if (control.vblank_nmi)
@@ -471,6 +480,7 @@ void ppu2C02::clock()
             frame_complete = true;
         }
     }
+    printf("2(%d, %d): %d\n", cycle, scanline, status.vblank);
 }
 
 void ppu2C02::reset()

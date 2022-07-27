@@ -63,6 +63,7 @@ void CPUBus::insertCartridge(const std::shared_ptr<Cartridge>& cartridge)
 
 void CPUBus::reset()
 {
+    printf("RESET!\n\n");
     cpu.reset();
     ppu.reset();
     systemClockCount = 0;

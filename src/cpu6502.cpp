@@ -16,7 +16,8 @@ cpu6502::cpu6502()
     using a = cpu6502;
 	lookup =
 	{
-		{ "BRK", &a::BRK, &a::IMM, 7 },{ "ORA", &a::ORA, &a::IZX, 6 },{ "???", &a::XXX, &a::IMP, 2 },{ "???", &a::XXX, &a::IMP, 8 },{ "???", &a::NOP, &a::IMP, 3 },{ "ORA", &a::ORA, &a::ZP0, 3 },{ "ASL", &a::ASL, &a::ZP0, 5 },{ "???", &a::XXX, &a::IMP, 5 },{ "PHP", &a::PHP, &a::IMP, 3 },{ "ORA", &a::ORA, &a::IMM, 2 },{ "ASL", &a::ASL, &a::ACC, 2 },{ "???", &a::XXX, &a::IMP, 2 },{ "???", &a::NOP, &a::IMP, 4 },{ "ORA", &a::ORA, &a::ABS, 4 },{ "ASL", &a::ASL, &a::ABS, 6 },{ "???", &a::XXX, &a::IMP, 6 },
+     // "BRK", &a::BRK, &a::IMM, 7
+		{ "BRK", &a::BRK, &a::IMP, 7 },{ "ORA", &a::ORA, &a::IZX, 6 },{ "???", &a::XXX, &a::IMP, 2 },{ "???", &a::XXX, &a::IMP, 8 },{ "???", &a::NOP, &a::IMP, 3 },{ "ORA", &a::ORA, &a::ZP0, 3 },{ "ASL", &a::ASL, &a::ZP0, 5 },{ "???", &a::XXX, &a::IMP, 5 },{ "PHP", &a::PHP, &a::IMP, 3 },{ "ORA", &a::ORA, &a::IMM, 2 },{ "ASL", &a::ASL, &a::ACC, 2 },{ "???", &a::XXX, &a::IMP, 2 },{ "???", &a::NOP, &a::IMP, 4 },{ "ORA", &a::ORA, &a::ABS, 4 },{ "ASL", &a::ASL, &a::ABS, 6 },{ "???", &a::XXX, &a::IMP, 6 },
         { "BPL", &a::BPL, &a::REL, 2 },{ "ORA", &a::ORA, &a::IZY, 5 },{ "???", &a::XXX, &a::IMP, 2 },{ "???", &a::XXX, &a::IMP, 8 },{ "???", &a::NOP, &a::IMP, 4 },{ "ORA", &a::ORA, &a::ZPX, 4 },{ "ASL", &a::ASL, &a::ZPX, 6 },{ "???", &a::XXX, &a::IMP, 6 },{ "CLC", &a::CLC, &a::IMP, 2 },{ "ORA", &a::ORA, &a::ABY, 4 },{ "???", &a::NOP, &a::IMP, 2 },{ "???", &a::XXX, &a::IMP, 7 },{ "???", &a::NOP, &a::IMP, 4 },{ "ORA", &a::ORA, &a::ABX, 4 },{ "ASL", &a::ASL, &a::ABX, 7 },{ "???", &a::XXX, &a::IMP, 7 },
 		{ "JSR", &a::JSR, &a::ABS, 6 },{ "AND", &a::AND, &a::IZX, 6 },{ "???", &a::XXX, &a::IMP, 2 },{ "???", &a::XXX, &a::IMP, 8 },{ "BIT", &a::BIT, &a::ZP0, 3 },{ "AND", &a::AND, &a::ZP0, 3 },{ "ROL", &a::ROL, &a::ZP0, 5 },{ "???", &a::XXX, &a::IMP, 5 },{ "PLP", &a::PLP, &a::IMP, 4 },{ "AND", &a::AND, &a::IMM, 2 },{ "ROL", &a::ROL, &a::ACC, 2 },{ "???", &a::XXX, &a::IMP, 2 },{ "BIT", &a::BIT, &a::ABS, 4 },{ "AND", &a::AND, &a::ABS, 4 },{ "ROL", &a::ROL, &a::ABS, 6 },{ "???", &a::XXX, &a::IMP, 6 },
 		{ "BMI", &a::BMI, &a::REL, 2 },{ "AND", &a::AND, &a::IZY, 5 },{ "???", &a::XXX, &a::IMP, 2 },{ "???", &a::XXX, &a::IMP, 8 },{ "???", &a::NOP, &a::IMP, 4 },{ "AND", &a::AND, &a::ZPX, 4 },{ "ROL", &a::ROL, &a::ZPX, 6 },{ "???", &a::XXX, &a::IMP, 6 },{ "SEC", &a::SEC, &a::IMP, 2 },{ "AND", &a::AND, &a::ABY, 4 },{ "???", &a::NOP, &a::IMP, 2 },{ "???", &a::XXX, &a::IMP, 7 },{ "???", &a::NOP, &a::IMP, 4 },{ "AND", &a::AND, &a::ABX, 4 },{ "ROL", &a::ROL, &a::ABX, 7 },{ "???", &a::XXX, &a::IMP, 7 },
@@ -60,7 +61,7 @@ std::map<uint16_t, std::string> cpu6502::disassemble(uint16_t start, uint16_t en
     while (addr<=(uint32_t)end)
     {
         line = addr;
-        opcode = read(addr++, true);
+        opcode = read(addr++,true);
 
         std::string s = "$"+hex(addr-1,4)+"    "+lookup[opcode].name+" ";
 
@@ -74,56 +75,56 @@ std::map<uint16_t, std::string> cpu6502::disassemble(uint16_t start, uint16_t en
         }
         else if (lookup[opcode].addrmode == &cpu6502::IMM)
         {
-            s += "#$"+hex(read(addr++),2)+"  {IMM}";
+            s += "#$"+hex(read(addr++,true),2)+"  {IMM}";
         }
         else if (lookup[opcode].addrmode == &cpu6502::REL)
         {
-            uint8_t offset = read(addr++);
+            uint8_t offset = read(addr++,true);
             s += "$"+hex(offset,2)+" [$"+hex(addr+(int8_t)offset,4)+"]  {REL}";
         }
         else if (lookup[opcode].addrmode == &cpu6502::IND)
         {
-            low = read(addr++);
-            high = read(addr++);
+            low = read(addr++,true);
+            high = read(addr++,true);
             s += "$("+hex((high<<8)|low,4)+")  {IND}";
         }
         else if (lookup[opcode].addrmode == &cpu6502::ABS)
         {
-            low = read(addr++);
-            high = read(addr++);
+            low = read(addr++,true);
+            high = read(addr++,true);
             s += "$"+hex((high<<8)|low,4)+"  {ABS}";
         }
         else if (lookup[opcode].addrmode == &cpu6502::ABX)
         {
-            low = read(addr++);
-            high = read(addr++);
+            low = read(addr++,true);
+            high = read(addr++,true);
             s += "$"+hex((high<<8)|low,4)+",X  {ABX}";
         }
         else if (lookup[opcode].addrmode == &cpu6502::ABY)
         {
-            low = read(addr++);
-            high = read(addr++);
+            low = read(addr++,true);
+            high = read(addr++,true);
             s += "$"+hex((high<<8)|low,4)+",Y  {ABY}";
         }
         else if (lookup[opcode].addrmode == &cpu6502::ZP0)
         {
-            s += "$"+hex(read(addr++),2)+"  {ZP0}";
+            s += "$"+hex(read(addr++,true),2)+"  {ZP0}";
         }
         else if (lookup[opcode].addrmode == &cpu6502::ZPX)
         {
-            s += "$"+hex(read(addr++),2)+",X  {ZPX}";
+            s += "$"+hex(read(addr++,true),2)+",X  {ZPX}";
         }
         else if (lookup[opcode].addrmode == &cpu6502::ZPY)
         {
-            s += "$"+hex(read(addr++),2)+",Y  {ZPY}";
+            s += "$"+hex(read(addr++,true),2)+",Y  {ZPY}";
         }
         else if (lookup[opcode].addrmode == &cpu6502::IZX)
         {
-            s += "($"+hex(read(addr++),2)+",X)  {IZX}";
+            s += "($"+hex(read(addr++,true),2)+",X)  {IZX}";
         }
         else if (lookup[opcode].addrmode == &cpu6502::IZY)
         {
-            s += "($"+hex(read(addr++),2)+",Y)  {IZY}";
+            s += "($"+hex(read(addr++,true),2)+",Y)  {IZY}";
         }
         else
         {
@@ -167,6 +168,13 @@ void cpu6502::push(uint8_t val)
 
 uint8_t cpu6502::pop()
 {
+    // Stack underflow
+    //if (stackptr > 0xFD)
+    //{
+    //    printf("[WARNING] Stack underflow!");
+    //    // exit(0) ??
+    //}
+
     stackptr++;
     return read(stackptr+0x0100);
 }
@@ -204,7 +212,8 @@ void cpu6502::reset()
     a = 0;
     x = 0;
     y = 0;
-    stackptr = 0xFD;
+    //stackptr = 0xFD;
+    stackptr = 0xFF;
     status = 0x00 | U; // Everything is zero exept for the unused bit
 
     // Read where the program starts
@@ -503,6 +512,7 @@ uint8_t cpu6502::BCC()
     {
         cycles++;
         addr_abs = pc + addr_rel;
+        //printf("BCC jumped from 0x%s to 0x%s\n", hex(pc,4).c_str(), hex(addr_abs,4).c_str());
         if ((addr_abs & 0xFF00) == (pc & 0xFF00))
             cycles++;
         pc = addr_abs;
@@ -516,6 +526,7 @@ uint8_t cpu6502::BCS()
     {
         cycles++;
         addr_abs = pc + addr_rel;
+        //printf("BCS jumped from 0x%s to 0x%s\n", hex(pc,4).c_str(), hex(addr_abs,4).c_str());
         if ((addr_abs & 0xFF00) == (pc & 0xFF00))
             cycles++;
         pc = addr_abs;
@@ -530,6 +541,7 @@ uint8_t cpu6502::BEQ()
     {
         cycles++;
         addr_abs = pc + addr_rel;
+        //printf("BEC jumped from 0x%s to 0x%s\n", hex(pc,4).c_str(), hex(addr_abs,4).c_str());
         if ((addr_abs & 0xFF00) == (pc & 0xFF00))
             cycles++;
         pc = addr_abs;
@@ -542,7 +554,8 @@ uint8_t cpu6502::BIT()
 {
     fetch();
     uint8_t tmp = a & fetched;
-    setFlag(V, fetched&(1<<6)); // Set the overflow flag
+    //    setFlag(V, fetched&(1<<6)); // Set the overflow flag
+    setFlag(V, (a&0x80==fetched&0x80)&(a&0x80!=tmp&0x80));
     setFlag(Z, tmp==0); // Set the zero flag
     setFlag(N, fetched&(1<<7)); // Set the negative flag
     return 0;
@@ -555,6 +568,7 @@ uint8_t cpu6502::BMI()
     {
         cycles++;
         addr_abs = pc + addr_rel;
+        //printf("BMI jumped from 0x%s to 0x%s\n", hex(pc,4).c_str(), hex(addr_abs,4).c_str());
         if ((addr_abs & 0xFF00) == (pc & 0xFF00))
             cycles++;
         pc = addr_abs;
@@ -569,6 +583,7 @@ uint8_t cpu6502::BNE()
     {
         cycles++;
         addr_abs = pc + addr_rel;
+        //printf("BNE jumped from 0x%s to 0x%s\n", hex(pc,4).c_str(), hex(addr_abs,4).c_str());
         if ((addr_abs & 0xFF00) == (pc & 0xFF00))
             cycles++;
         pc = addr_abs;
@@ -583,6 +598,7 @@ uint8_t cpu6502::BPL()
     {
         cycles++;
         addr_abs = pc + addr_rel;
+        //printf("BPL jumped from 0x%s to 0x%s\n", hex(pc,4).c_str(), hex(addr_abs,4).c_str());
         if ((addr_abs & 0xFF00) == (pc & 0xFF00))
             cycles++;
         pc = addr_abs;
@@ -614,7 +630,8 @@ uint8_t cpu6502::BVC()
     {
         cycles++;
         addr_abs = pc + addr_rel;
-        if ((addr_abs & 0xFF00) == (pc & 0xFF00))
+        //printf("BVC jumped from 0x%s to 0x%s\n", hex(pc,4).c_str(), hex(addr_abs,4).c_str());
+        if ((addr_abs & 0xFF00) != (pc & 0xFF00))
             cycles++;
         pc = addr_abs;
     }
@@ -627,7 +644,8 @@ uint8_t cpu6502::BVS()
     {
         cycles++;
         addr_abs = pc + addr_rel;
-        if ((addr_abs & 0xFF00) == (pc & 0xFF00))
+        //printf("BCS jumped from 0x%s to 0x%s\n", hex(pc,4).c_str(), hex(addr_abs,4).c_str());
+        if ((addr_abs & 0xFF00) != (pc & 0xFF00))
             cycles++;
         pc = addr_abs;
     }
@@ -755,8 +773,8 @@ uint8_t cpu6502::JMP()
 
 uint8_t cpu6502::JSR()
 {
-    push((pc>>8)&0x00FF); // High byte
-    push(pc&0x00FF); // Low byte
+    push((pc-1)>>8); // High byte
+    push((pc-1)&0x00FF); // Low byte
     pc = addr_abs;
     return 0;
 }
@@ -871,6 +889,7 @@ uint8_t cpu6502::PHA()
 uint8_t cpu6502::PHP()
 {
     setFlag(B, 0);
+    setFlag(U, 1);
     push(status);
     return 0;
 }
@@ -886,6 +905,8 @@ uint8_t cpu6502::PLA()
 uint8_t cpu6502::PLP()
 {
     status = pop();
+    setFlag(U, 1);
+    setFlag(B, 0);
     return 0;
 }
 
@@ -936,6 +957,7 @@ uint8_t cpu6502::RTS()
     uint8_t low = pop();
     uint8_t high = pop();
     pc = (high << 8) | low;
+    pc++;
     return 0;
 }
 

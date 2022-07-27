@@ -33,19 +33,56 @@ public:
         DrawString(x, y+50, "STACK PTR: $" + hex(nes.cpu.stackptr, 4));
     }
 
-    void DrawPage(int x, int y, uint8_t page, uint8_t size)
+    void DrawPage(int x, int y, uint8_t page)
     {
         uint16_t addr = page<<8;
-        for (int row=0;row<size;row++)
+        for (int row=0;row<16;row++)
         {
             std::string s ="$"+hex(addr,4)+":";
-            for (int col=0;col<size;col++)
+            for (int col=0;col<16;col++)
             {
-                s += " "+hex(nes.read(addr),2);
+                s += " "+hex(nes.read(addr,true),2);
                 addr++;
             }
             DrawString(x,y,s);
             y+=10;
+        }
+    }
+
+    void DrawCode(int x, int y, int lines)
+    {
+        std::map<uint16_t,std::string>::iterator cur = asmMap.find(nes.cpu.pc);
+        if (cur!=asmMap.end())
+            DrawString(x, y, cur->second, olc::CYAN);
+        cur++;
+        for (uint8_t i=1;(i<lines>>1)&&(cur!=asmMap.end());i++,cur++)
+        {
+            DrawString(x, y+i*10, cur->second);
+        }
+
+        cur = asmMap.find(nes.cpu.pc);
+        cur--;
+        for (uint8_t i=1;(i<lines>>1)&&(cur!=asmMap.end());i++,cur--)
+        {
+            DrawString(x, y-i*10, cur->second);
+        }
+    }
+
+    void DrawStack(int x, int y, uint8_t lines)
+    {
+        DrawString(x,y,"STACK:  " + std::to_string(0xFF-nes.cpu.stackptr));
+
+        if ((0xFF-nes.cpu.stackptr) < lines)
+            lines = 0xFF - nes.cpu.stackptr;
+
+        for (uint8_t i=0;i<lines;i++)
+        {
+            uint16_t addr = 0x0200-(0xFF-nes.cpu.stackptr)+i;
+            uint8_t val = nes.read(addr);
+
+            std::string s = "$"+hex(addr,4)+": "+hex(val,2);
+
+            DrawString(x,y+10*(i+1),s);
         }
     }
 
@@ -68,28 +105,12 @@ public:
         asmMap = nes.cpu.disassemble(0x0000, 0xFFFF);
 
         // Reset
-        nes.cpu.reset();
+        nes.reset();
+
+        // For debug
+        //nes.cpu.pc = 0xC000;
 
         return true;
-    }
-
-    void DrawCode(int x, int y, int lines)
-    {
-        std::map<uint16_t,std::string>::iterator cur = asmMap.find(nes.cpu.pc);
-        if (cur!=asmMap.end())
-            DrawString(x, y, cur->second, olc::CYAN);
-        cur++;
-        for (uint8_t i=1;(i<lines>>1)&&(cur!=asmMap.end());i++,cur++)
-        {
-            DrawString(x, y+i*10, cur->second);
-        }
-
-        cur = asmMap.find(nes.cpu.pc);
-        cur--;
-        for (uint8_t i=1;(i<lines>>1)&&(cur!=asmMap.end());i++,cur--)
-        {
-            DrawString(x, y-i*10, cur->second);
-        }
     }
 
     bool OnUserUpdate(float fElapsedTime) override
@@ -109,6 +130,11 @@ public:
 
             //for (uint8_t n=0;n<50;n++)
             //{
+            //    if (nes.cpu.pc == 0xCD93)
+            //    {
+            //        running = false;
+            //        break;
+            //    }
             //    do {nes.clock();} while (!nes.cpu.complete());
             //}
         }
@@ -117,15 +143,41 @@ public:
         {
             return false;
         }
-        else if (GetKey(olc::Key::SPACE).bPressed)
+        else if (GetKey(olc::Key::M).bPressed)
         {
+            for (uint8_t i=0;i<200;i++)
+            {
                 do { nes.clock(); }
                 while (!nes.cpu.complete());
 
                 // Not sure why
-                do { nes.clock(); }
-                while (nes.cpu.complete());
+                //do { nes.clock(); }
+                //while (nes.cpu.complete());
+            }
         }
+        else if (GetKey(olc::Key::N).bPressed)
+        {
+            for (uint8_t i=0;i<20;i++)
+            {
+                do { nes.clock(); }
+                while (!nes.cpu.complete());
+
+                // Not sure why
+                //do { nes.clock(); }
+                //while (nes.cpu.complete());
+            }
+        }
+        else if (GetKey(olc::Key::B).bPressed)
+        {
+            do { nes.clock(); }
+            while (!nes.cpu.complete());
+
+            // Not sure why
+            do { nes.clock(); }
+            while (nes.cpu.complete());
+
+        }
+
         else if (GetKey(olc::Key::F).bPressed)
         {
             do { nes.clock(); }
@@ -161,13 +213,14 @@ public:
         DrawCpu(520, 2);
         DrawCode(520, 200, 26);
 
-        //DrawPage(2, 2, 0x00, 16);
-        //DrawPage(2, 182, 0x80, 16);
+        DrawPage(2, 2, 0x00);
+        //DrawPage(2, 182, 0x80);
+        DrawStack(2, 200, 10);
 
         DrawSprite(516, 348, &nes.ppu.updatePaletteSprite(0, selectedPalette));
         DrawSprite(648, 348, &nes.ppu.updatePaletteSprite(1, selectedPalette));
 
-        DrawSprite(0, 0, &nes.ppu.getScreen(), 2);
+        //DrawSprite(0, 0, &nes.ppu.getScreen(), 2);
 
         /*
         olc::Sprite& s = nes.ppu.updatePaletteSprite(0, selectedPalette);
