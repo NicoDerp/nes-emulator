@@ -89,7 +89,7 @@ public:
     bool OnUserCreate() override
     {
         // Load the cartridge
-        cart = std::make_shared<Cartridge>("programs/background2.nes");
+        cart = std::make_shared<Cartridge>("programs/background3.nes");
 
         // Check if the image is valid
         if (!cart->imageValid())

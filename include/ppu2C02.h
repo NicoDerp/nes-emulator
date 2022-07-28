@@ -58,12 +58,12 @@ private:
         {
             uint8_t nametable_x:1;
             uint8_t nametable_y:1;
-            bool increment_mode:1;
-            bool spr_pattern_addr:1;
-            bool bgr_pattern_addr:1;
-            bool sprite_size:1;
-            bool slave_mode:1; // Unused?
-            bool vblank_nmi:1;
+            uint8_t increment_mode:1;
+            uint8_t spr_pattern_addr:1;
+            uint8_t bgr_pattern_addr:1;
+            uint8_t sprite_size:1;
+            uint8_t slave_mode:1; // Unused?
+            uint8_t vblank_nmi:1;
         };
 
         uint8_t reg;

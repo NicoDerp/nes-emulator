@@ -277,7 +277,6 @@ void ppu2C02::clock()
             }
         }
 
-        // (Include NT fetch at 257?)
         // Fetch next tile info (not cycle==0, idle)
         if ((1 <= cycle && cycle <= 256) || (321 <= cycle && cycle <= 336))
         {
@@ -316,7 +315,7 @@ void ppu2C02::clock()
                 bg_shifter_attr_high = (bg_shifter_attr_high & 0xFF00) | ((bg_next_attr & 0b01) ? 0xFF : 0x00);
 
                 bg_next_id = bus.read(0x2000 | (vram_addr.reg & 0x0FFF));
-                printf("READING NT BYTE FROM 0x%s: 0x%s\n", hex(0x2000|(vram_addr.reg&0x0FFF),4).c_str(), hex(bg_next_id,2).c_str());
+                //printf("READING NT BYTE FROM 0x%s: 0x%s\n", hex(0x2000|(vram_addr.reg&0x0FFF),4).c_str(), hex(bg_next_id,2).c_str());
             }
 
             // AT byte
@@ -363,7 +362,7 @@ void ppu2C02::clock()
         if (vram_addr.fine_y >= 0x7)
         {
             // If overflow toggle bit 10 (nametable_y)
-            if (vram_addr.coarse_y == 29)
+            if (vram_addr.coarse_y >= 29)
             {
                 vram_addr.nametable_y = ~vram_addr.nametable_y;
                 vram_addr.coarse_y = 0;

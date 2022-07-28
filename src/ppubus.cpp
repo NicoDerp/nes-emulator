@@ -86,7 +86,7 @@ void PPUBus::write(uint16_t addr, uint8_t data)
     }
     else if (0x2000 <= addr && addr <= 0x3EFF)
     {
-        printf("WRITING 0x%s to 0x%s\n", hex(data, 2).c_str(), hex(addr, 4).c_str());
+        //printf("WRITING 0x%s to 0x%s\n", hex(data, 2).c_str(), hex(addr, 4).c_str());
         // For correct mirroring
         uint8_t i = ((addr-0x2000)/0x0400)%3;
         if (cart->mirror == Cartridge::MIRROR::HORIZONTAL)
