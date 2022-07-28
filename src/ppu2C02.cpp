@@ -556,7 +556,7 @@ olc::Sprite& ppu2C02::updatePaletteSprite(uint8_t i, uint8_t palette)
                     //
                     // 0000 1000
                     // px = 3
-                    uint8_t mask = 1 << (8-px);
+                    uint8_t mask = 1 << (7-px);
                     uint8_t value = (uint8_t)((MSB & mask) > 0)<<1 | (uint8_t)((LSB & mask) > 0);
 
                     // x = (tile * 8 (8 pixels per tile) + px (pixel offset into tile))
