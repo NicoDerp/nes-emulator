@@ -205,6 +205,7 @@ void ppu2C02::cpuWrite(uint16_t addr, uint8_t data)
             // Write x
             fine_x = data & 0x07;
             tram_addr.coarse_x = data >> 3;
+
         }
         else
         {
@@ -212,7 +213,6 @@ void ppu2C02::cpuWrite(uint16_t addr, uint8_t data)
             // Write y
             tram_addr.fine_y = data & 0x07;
             tram_addr.coarse_y = data >> 3;
-
         }
 
         ppu_addr_latch = !ppu_addr_latch;
@@ -222,7 +222,7 @@ void ppu2C02::cpuWrite(uint16_t addr, uint8_t data)
         if (ppu_addr_latch == 0)
         {
             // Write high (this is first)
-            tram_addr.reg = (uint16_t)(((data&0x3F)<<8) | (tram_addr.reg & 0x00FF));
+            tram_addr.reg = (((uint16_t)data & 0x3F) << 8) | (tram_addr.reg & 0x00FF);
         }
         else
         {
@@ -236,8 +236,6 @@ void ppu2C02::cpuWrite(uint16_t addr, uint8_t data)
     }
     else if (addr==0x7) // PPUDATA
     {
-        if (control.increment_mode)
-            printf("INCREMENT MODE!\n");
         bus.write(vram_addr.reg, data);
         vram_addr.reg += (control.increment_mode ? 32 : 1); // im*31+1
     }
@@ -280,8 +278,8 @@ void ppu2C02::clock()
         }
 
         // (Include NT fetch at 257?)
-        // Fetch next tile info    (257)
-        if ((2 <= cycle && cycle <= 256) || (321 <= cycle && cycle <= 336))
+        // Fetch next tile info (not cycle==0, idle)
+        if ((1 <= cycle && cycle <= 256) || (321 <= cycle && cycle <= 336))
         {
             if (mask.render_bgr)
             {
@@ -318,6 +316,7 @@ void ppu2C02::clock()
                 bg_shifter_attr_high = (bg_shifter_attr_high & 0xFF00) | ((bg_next_attr & 0b01) ? 0xFF : 0x00);
 
                 bg_next_id = bus.read(0x2000 | (vram_addr.reg & 0x0FFF));
+                printf("READING NT BYTE FROM 0x%s: 0x%s\n", hex(0x2000|(vram_addr.reg&0x0FFF),4).c_str(), hex(bg_next_id,2).c_str());
             }
 
             // AT byte
@@ -328,7 +327,7 @@ void ppu2C02::clock()
                                         | (vram_addr.nametable_x << 10)
                                         | ((vram_addr.coarse_y >> 2) << 3)
                                         | (vram_addr.coarse_x >> 2));
-                //printf("ATTR: %d\n", bg_next_attr);
+
                 if (vram_addr.coarse_x&0x02)
                     bg_next_attr >>= 2;
 
@@ -341,24 +340,24 @@ void ppu2C02::clock()
             // Low BG tile byte
             if ((cycle&0x07) == 5)
             {
-                bg_next_lsb = bus.read((control.bgr_pattern_addr << 12)
+                bg_next_lsb = bus.read(((uint16_t)control.bgr_pattern_addr << 12)
                                        + ((uint16_t)bg_next_id << 4)
-                                       + (vram_addr.fine_y));
+                                       + ((uint16_t)vram_addr.fine_y) + 0);
             }
 
             // High BG tile byte
             if ((cycle&0x07) == 7)
             {
-                bg_next_msb = bus.read((control.bgr_pattern_addr << 12)
+                bg_next_msb = bus.read(((uint16_t)control.bgr_pattern_addr << 12)
                                        + ((uint16_t)bg_next_id << 4)
-                                       + (vram_addr.fine_y) + 8);
+                                       + ((uint16_t)vram_addr.fine_y) + 8);
             }
         }
     }
 
     // Inc vert(v)
     // End of scanline, increment y
-    if (cycle == 256 && (mask.render_bgr || mask.render_spr))
+    if ((cycle == 256) && (mask.render_bgr || mask.render_spr))
     {
         // If overflow increment coarse_y
         if (vram_addr.fine_y >= 0x7)
@@ -388,6 +387,7 @@ void ppu2C02::clock()
         }
     }
 
+
     // hori(v) = hori(t)
     if (cycle == 257)
     {
@@ -413,9 +413,9 @@ void ppu2C02::clock()
     }
 
     // Unused NT fetches (?)
-    if (cycle == 337 || cycle == 339)
+    if ((cycle == 337) || (cycle == 339))
     {
-        // Should it update shifters?? Don't think so
+        // Should it update shifters?? Not sure
         //bg_shifter_pat_low = (bg_shifter_pat_low & 0xFF00) | bg_next_lsb;
         //bg_shifter_pat_high = (bg_shifter_pat_high & 0xFF00) | bg_next_msb;
         //bg_shifter_attr_low = (bg_shifter_attr_low & 0xFF00) | ((bg_next_attr & 0b01) ? 0xFF : 0x00);
@@ -432,7 +432,7 @@ void ppu2C02::clock()
     }
 
     // VBLANK
-    if (scanline == 241 && cycle == 1)
+    if ((scanline == 241) && (cycle == 1))
     {
         // printf("VBLANK ON\n");
         status.vblank = true;
@@ -440,7 +440,6 @@ void ppu2C02::clock()
         if (control.vblank_nmi)
             nmi = true;
     }
-
 
 
     // Get the palette and pattern stuff

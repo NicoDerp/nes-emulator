@@ -119,8 +119,6 @@ public:
 
         Clear(olc::DARK_GREY);
 
-        if (nes.cpu.pc == 0xDD95)
-            running = false;
         if (running)
         {
             if (totalElapsedTime >= (1.0f/60.0f))
