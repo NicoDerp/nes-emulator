@@ -463,8 +463,20 @@ void ppu2C02::clock()
         bg_palette = (bg_pal1 << 1) | bg_pal0;
     }
 
+    // Enhance colors
+    olc::Pixel pixel = getColorFromPaletteRam(bg_palette, bg_pixel);
+
+    if (mask.enhance_red)
+        pixel.r = std::max(pixel.r*2, 255);
+
+    if (mask.enhance_grn)
+        pixel.g = std::max(pixel.g*2, 255);
+
+    if (mask.enhance_blu)
+        pixel.b = std::max(pixel.b*2, 255);
+
     // Finally!!! Draw
-    sprScreen.SetPixel(cycle-1, scanline, getColorFromPaletteRam(bg_palette, bg_pixel));
+    sprScreen.SetPixel(cycle-1, scanline, pixel);
 
     cycle++;
     if (cycle >= 341)

@@ -181,11 +181,6 @@ uint8_t cpu6502::pop()
 
 void cpu6502::clock()
 {
-    if (pc == 0xDEAD)
-    {
-        printf("DEAD\n");
-        exit(0);
-    }
     // No more cycles left for operation so fetch next one
     if (cycles == 0)
     {
