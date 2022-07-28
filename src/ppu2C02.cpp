@@ -156,7 +156,7 @@ uint8_t ppu2C02::cpuRead(uint16_t addr, bool rdonly)
             if (vram_addr.reg >= 0x3F00)
                 data = ppu_data_buffer;
 
-            vram_addr.reg += (control.increment_mode ? 1 : 32); // im*31+1
+            vram_addr.reg += (control.increment_mode ? 32 : 1); // im*31+1
         }
     }
     else
@@ -236,6 +236,8 @@ void ppu2C02::cpuWrite(uint16_t addr, uint8_t data)
     }
     else if (addr==0x7) // PPUDATA
     {
+        if (control.increment_mode)
+            printf("INCREMENT MODE!\n");
         bus.write(vram_addr.reg, data);
         vram_addr.reg += (control.increment_mode ? 32 : 1); // im*31+1
     }
