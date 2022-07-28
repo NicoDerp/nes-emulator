@@ -321,16 +321,25 @@ void ppu2C02::clock()
             // AT byte
             if ((cycle&0x07) == 3)
             {
-                bg_next_attr = bus.read(0x23C0
-                                        | (vram_addr.nametable_y << 11)
-                                        | (vram_addr.nametable_x << 10)
-                                        | ((vram_addr.coarse_y >> 2) << 3)
-                                        | (vram_addr.coarse_x >> 2));
+                //bg_next_attr = bus.read(0x23C0
+                //                        | (vram_addr.nametable_y << 11)
+                //                        | (vram_addr.nametable_x << 10)
+                //                        | ((vram_addr.coarse_y >> 2) << 3)
+                //                        | (vram_addr.coarse_x >> 2));
 
-                if (vram_addr.coarse_x&0x02)
+                //   1 1 1 x x
+                // 1 1 1 . . .
+
+                bg_next_attr = bus.read(0x23C0
+                                        | (vram_addr.coarse_x >> 2)
+                                        | ((vram_addr.coarse_y & 0x07) << 1)
+                                        | (vram_addr.nametable_x << 10)
+                                        | (vram_addr.nametable_y >> 11));
+
+                if (vram_addr.coarse_x & 0x02)
                     bg_next_attr >>= 2;
 
-                if (vram_addr.coarse_y&0x02)
+                if (vram_addr.coarse_y & 0x02)
                     bg_next_attr >>= 4;
 
                 bg_next_attr &= 0x03;
@@ -369,7 +378,7 @@ void ppu2C02::clock()
             }
             // End of nametable, beginning of attribute memory.
             // Wrap around
-            else if (vram_addr.coarse_y == 31)
+            else if (vram_addr.coarse_y >= 31)
             {
                 vram_addr.coarse_y = 0;
             }
@@ -406,9 +415,12 @@ void ppu2C02::clock()
     // vert(v) = vert(t)
     if ((scanline == -1) && (280 <= cycle && cycle <= 304))
     {
-        vram_addr.fine_y = tram_addr.fine_y;
-        vram_addr.coarse_y = tram_addr.coarse_y;
-        vram_addr.nametable_y = tram_addr.nametable_y;
+        if (mask.render_bgr || mask.render_spr)
+        {
+            vram_addr.fine_y = tram_addr.fine_y;
+            vram_addr.coarse_y = tram_addr.coarse_y;
+            vram_addr.nametable_y = tram_addr.nametable_y;
+        }
     }
 
     // Unused NT fetches (?)
