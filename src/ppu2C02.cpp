@@ -321,18 +321,9 @@ void ppu2C02::clock()
             // AT byte
             if ((cycle&0x07) == 3)
             {
-                //bg_next_attr = bus.read(0x23C0
-                //                        | (vram_addr.nametable_y << 11)
-                //                        | (vram_addr.nametable_x << 10)
-                //                        | ((vram_addr.coarse_y >> 2) << 3)
-                //                        | (vram_addr.coarse_x >> 2));
-
-                //   1 1 1 x x
-                // 1 1 1 . . .
-
                 bg_next_attr = bus.read(0x23C0
                                         | (vram_addr.coarse_x >> 2)
-                                        | ((vram_addr.coarse_y & 0x07) << 1)
+                                        | ((vram_addr.coarse_y & 0x1C) << 1)
                                         | (vram_addr.nametable_x << 10)
                                         | (vram_addr.nametable_y >> 11));
 
