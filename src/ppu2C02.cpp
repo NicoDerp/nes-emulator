@@ -479,13 +479,14 @@ void ppu2C02::clock()
     olc::Pixel pixel = getColorFromPaletteRam(bg_palette, bg_pixel);
 
     if (mask.enhance_red)
-        pixel.r = std::max(pixel.r*2, 255);
+        pixel.r = std::min((int)(pixel.r * 1.5f), 255);
 
     if (mask.enhance_grn)
-        pixel.g = std::max(pixel.g*2, 255);
+        pixel.g = std::min((int)(pixel.g * 1.5f), 255);
 
     if (mask.enhance_blu)
-        pixel.b = std::max(pixel.b*2, 255);
+        pixel.b = std::min((int)(pixel.b * 1.5f), 255);
+
 
     // Finally!!! Draw
     sprScreen.SetPixel(cycle-1, scanline, pixel);
