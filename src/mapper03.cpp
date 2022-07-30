@@ -66,7 +66,8 @@ bool Mapper03::cpuMapWriteAddr(uint16_t addr, uint32_t* mapped_addr)
 
     if (addr == 0x8000)
     {
-        //mapped_addr
+        //cur_chrBank = 
+        return false;
     }
     else if (prg_banks == 1)
     {
