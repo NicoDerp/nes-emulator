@@ -79,6 +79,7 @@ void CPUBus::clock()
         systemClockCount = 0;
     }
 
+
     if (ppu.nmi)
     {
         ppu.nmi = false;

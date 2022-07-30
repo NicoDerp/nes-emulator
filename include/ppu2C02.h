@@ -133,19 +133,19 @@ private:
     uint16_t bg_shifter_attr_low = 0x0000;
     uint16_t bg_shifter_attr_high = 0x0000;
 
-    int16_t cycle = 0;
-    int16_t scanline = 0;
-
-    union
-    {
-        uint8_t bytes[0xFF];
-        struct Sprite sprites[64];
-    } oam;
-    uint8_t oam_addr;
-
     bool ppu_addr_latch = false;
     uint8_t ppu_data_buffer = 0x00;
 
+
+    //uint8_t primary_oam[0x100];
+    //uint8_t secondary_oam[0x20];
+    //uint8_t oam_addr;
+
+    //uint8_t fg_shifter
+
+
+    int16_t cycle = 0;
+    int16_t scanline = 0;
 
     std::shared_ptr<Cartridge> cart;
 

@@ -9,7 +9,7 @@ ppu2C02::ppu2C02()
     memset((uint8_t*)bus.patternTable, 0, sizeof(sizeof(bus.patternTable)));
     memset((uint8_t*)bus.nametables, 0, sizeof(bus.nametables));
     memset(bus.palette, 0, sizeof(bus.palette));
-    memset(oam.bytes, 0, sizeof(oam));
+    //memset(oam.bytes, 0, sizeof(oam));
 
     palScreen[0x00] = olc::Pixel(84, 84, 84);
     palScreen[0x01] = olc::Pixel(0, 30, 116);
@@ -442,7 +442,6 @@ void ppu2C02::clock()
         if (control.vblank_nmi)
             nmi = true;
     }
-
 
     // Get the palette and pattern stuff
     uint8_t bg_pixel = 0x00;

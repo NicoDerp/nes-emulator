@@ -100,6 +100,9 @@ bool Cartridge::cpuRead(uint16_t addr, uint8_t* data)
 
 bool Cartridge::ppuRead(uint16_t addr, uint8_t* data)
 {
+    if (chrBanks == 0)
+        return false;
+
     uint32_t mapped_addr = 0;
 
     if (!mapper->ppuMapReadAddr(addr, &mapped_addr))
@@ -124,6 +127,9 @@ bool Cartridge::cpuWrite(uint16_t addr, uint8_t data)
 
 bool Cartridge::ppuWrite(uint16_t addr, uint8_t data)
 {
+    if (chrBanks == 0)
+        return false;
+
     uint32_t mapped_addr = 0;
 
     if (!mapper->ppuMapWriteAddr(addr, &mapped_addr))
