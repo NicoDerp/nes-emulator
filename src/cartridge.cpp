@@ -52,7 +52,15 @@ Cartridge::Cartridge(const std::string& filename)
     chrBanks = header.chr_rom_size;
 
     prg_rom.resize(16384*prgBanks);
-    chr_rom.resize(8192*chrBanks);
+
+    if (chrBanks == 0)
+    {
+        chr_rom.resize(8192);
+    }
+    else
+    {
+        chr_rom.resize(8192*chrBanks);
+    }
 
     file.read((char*)prg_rom.data(), prg_rom.size());
     file.read((char*)chr_rom.data(), prg_rom.size());
@@ -61,17 +69,19 @@ Cartridge::Cartridge(const std::string& filename)
     mapperID = (header.flags7&0xF0)|(header.flags6>>4);
     mirror = (header.flags6&0x1) ? VERTICAL : HORIZONTAL;
 
+    printf("PRG BANKS: %d\n", prgBanks);
+    printf("CHR BANKS: %d\n", chrBanks);
+    printf("MAPPER ID: 0x%s\n", hex(mapperID,2).c_str());
+
     if (mapperID == 0x00)
         mapper = std::unique_ptr<Mapper>(new Mapper00(prgBanks, chrBanks));
     else
     {
-        printf("[ERROR] Unknown mapper 0x%s. Probably coming soon...", hex(mapperID,2).c_str());
+        printf("[ERROR] Unknown mapper 0x%s. Probably coming soon...\n", hex(mapperID,2).c_str());
         return;
     }
 
-    printf("PRG BANKS: %d\n", prgBanks);
-    printf("CHR BANKS: %d\n", chrBanks);
-    printf("MAPPER ID: %d\n", mapperID);
+
 
     imageValid_ = true;
 }
@@ -100,9 +110,6 @@ bool Cartridge::cpuRead(uint16_t addr, uint8_t* data)
 
 bool Cartridge::ppuRead(uint16_t addr, uint8_t* data)
 {
-    if (chrBanks == 0)
-        return false;
-
     uint32_t mapped_addr = 0;
 
     if (!mapper->ppuMapReadAddr(addr, &mapped_addr))
@@ -127,9 +134,6 @@ bool Cartridge::cpuWrite(uint16_t addr, uint8_t data)
 
 bool Cartridge::ppuWrite(uint16_t addr, uint8_t data)
 {
-    if (chrBanks == 0)
-        return false;
-
     uint32_t mapped_addr = 0;
 
     if (!mapper->ppuMapWriteAddr(addr, &mapped_addr))
