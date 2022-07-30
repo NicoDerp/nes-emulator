@@ -513,7 +513,7 @@ uint8_t cpu6502::BCC()
         cycles++;
         addr_abs = pc + addr_rel;
         //printf("BCC jumped from 0x%s to 0x%s\n", hex(pc,4).c_str(), hex(addr_abs,4).c_str());
-        if ((addr_abs & 0xFF00) == (pc & 0xFF00))
+        if ((addr_abs & 0xFF00) != (pc & 0xFF00))
             cycles++;
         pc = addr_abs;
     }
@@ -527,7 +527,7 @@ uint8_t cpu6502::BCS()
         cycles++;
         addr_abs = pc + addr_rel;
         //printf("BCS jumped from 0x%s to 0x%s\n", hex(pc,4).c_str(), hex(addr_abs,4).c_str());
-        if ((addr_abs & 0xFF00) == (pc & 0xFF00))
+        if ((addr_abs & 0xFF00) != (pc & 0xFF00))
             cycles++;
         pc = addr_abs;
     }
@@ -542,7 +542,7 @@ uint8_t cpu6502::BEQ()
         cycles++;
         addr_abs = pc + addr_rel;
         //printf("BEC jumped from 0x%s to 0x%s\n", hex(pc,4).c_str(), hex(addr_abs,4).c_str());
-        if ((addr_abs & 0xFF00) == (pc & 0xFF00))
+        if ((addr_abs & 0xFF00) != (pc & 0xFF00))
             cycles++;
         pc = addr_abs;
     }
@@ -569,7 +569,7 @@ uint8_t cpu6502::BMI()
         cycles++;
         addr_abs = pc + addr_rel;
         //printf("BMI jumped from 0x%s to 0x%s\n", hex(pc,4).c_str(), hex(addr_abs,4).c_str());
-        if ((addr_abs & 0xFF00) == (pc & 0xFF00))
+        if ((addr_abs & 0xFF00) != (pc & 0xFF00))
             cycles++;
         pc = addr_abs;
     }
@@ -584,7 +584,7 @@ uint8_t cpu6502::BNE()
         cycles++;
         addr_abs = pc + addr_rel;
         //printf("BNE jumped from 0x%s to 0x%s\n", hex(pc,4).c_str(), hex(addr_abs,4).c_str());
-        if ((addr_abs & 0xFF00) == (pc & 0xFF00))
+        if ((addr_abs & 0xFF00) != (pc & 0xFF00))
             cycles++;
         pc = addr_abs;
     }
@@ -599,7 +599,7 @@ uint8_t cpu6502::BPL()
         cycles++;
         addr_abs = pc + addr_rel;
         //printf("BPL jumped from 0x%s to 0x%s\n", hex(pc,4).c_str(), hex(addr_abs,4).c_str());
-        if ((addr_abs & 0xFF00) == (pc & 0xFF00))
+        if ((addr_abs & 0xFF00) != (pc & 0xFF00))
             cycles++;
         pc = addr_abs;
     }

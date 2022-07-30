@@ -89,7 +89,7 @@ public:
     bool OnUserCreate() override
     {
         // Load the cartridge
-        cart = std::make_shared<Cartridge>("programs/scanline.nes");
+        cart = std::make_shared<Cartridge>("programs/3.Forward_Branch.nes");
 
         // Check if the image is valid
         if (!cart->imageValid())
