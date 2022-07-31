@@ -15,7 +15,7 @@ Mapper00::~Mapper00()
 }
 
 
-bool Mapper00::cpuMapReadAddr(uint16_t addr, uint32_t* mapped_addr)
+bool Mapper00::cpuMapReadAddr(uint16_t addr, uint32_t* mapped_addr, uint8_t* data)
 {
     if (!(0x8000 <= addr && addr <= 0xFFFF))
         return false;
@@ -93,5 +93,10 @@ bool Mapper00::ppuMapWriteAddr(uint16_t addr, uint32_t* mapped_addr)
     *mapped_addr = addr;
 
     return true;
+}
+
+void Mapper00::reset()
+{
+
 }
 

@@ -10,14 +10,15 @@ public:
     ~Mapper03();
 
 public:
-    bool cpuMapReadAddr(uint16_t addr, uint32_t* mapped_addr) override;
+    bool cpuMapReadAddr(uint16_t addr, uint32_t* mapped_addr, uint8_t* data) override;
     bool ppuMapReadAddr(uint16_t addr, uint32_t* mapped_addr) override;
 
     bool cpuMapWriteAddr(uint16_t addr, uint32_t* mapped_addr, uint8_t* data) override;
     bool ppuMapWriteAddr(uint16_t addr, uint32_t* mapped_addr) override;
 
+    void reset() override;
+
 private:
     uint8_t chrBankSelect;
-
 };
 

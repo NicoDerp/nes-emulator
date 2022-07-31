@@ -33,7 +33,7 @@ uint8_t PPUBus::read(uint16_t addr)
     else if (0x2000 <= addr && addr <= 0x3EFF)
     {
         uint8_t i = ((addr-0x2000)/0x0400)%3;
-        if (cart->mirror == Cartridge::MIRROR::HORIZONTAL)
+        if (cart->mirror() == MIRROR::HORIZONTAL)
         {
             // Mirrors
             if (i == 0)
@@ -48,7 +48,7 @@ uint8_t PPUBus::read(uint16_t addr)
             if (i == 3)
                 data = nametables[1][addr&0x03FF];
         }
-        else if (cart->mirror == Cartridge::MIRROR::VERTICAL)
+        else if (cart->mirror() == MIRROR::VERTICAL)
         {
             if (i == 0)
                 data = nametables[0][addr&0x03FF];
@@ -88,7 +88,7 @@ void PPUBus::write(uint16_t addr, uint8_t data)
     {
         // For correct mirroring
         uint8_t i = ((addr-0x2000)/0x0400)%3;
-        if (cart->mirror == Cartridge::MIRROR::HORIZONTAL)
+        if (cart->mirror() == MIRROR::HORIZONTAL)
         {
             // Mirrors
             if (i == 0)
@@ -103,7 +103,7 @@ void PPUBus::write(uint16_t addr, uint8_t data)
             if (i == 3)
                 nametables[1][addr&0x03FF] = data;
         }
-        else if (cart->mirror == Cartridge::MIRROR::VERTICAL)
+        else if (cart->mirror() == MIRROR::VERTICAL)
         {
             if (i == 0)
                 nametables[0][addr&0x03FF] = data;

@@ -8,7 +8,9 @@
 #include <fstream>
 #include <memory>
 
+#include "mapper.h"
 #include "mapper00.h"
+#include "mapper01.h"
 #include "mapper03.h"
 
 class Cartridge
@@ -28,12 +30,7 @@ private:
     bool imageValid_ = false;
     std::unique_ptr<Mapper> mapper;
 
-public:
-    enum MIRROR
-    {
-        HORIZONTAL,
-        VERTICAL
-    } mirror;
+    MIRROR hw_mirror;
 
 public:
     bool imageValid();
@@ -43,5 +40,7 @@ public:
 
     bool cpuWrite(uint16_t addr, uint8_t data);
     bool ppuWrite(uint16_t addr, uint8_t data);
+
+    MIRROR mirror();
 };
 

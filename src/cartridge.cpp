@@ -67,7 +67,7 @@ Cartridge::Cartridge(const std::string& filename)
     file.close();
 
     mapperID = (header.flags7&0xF0)|(header.flags6>>4);
-    mirror = (header.flags6&0x1) ? VERTICAL : HORIZONTAL;
+    hw_mirror = (header.flags6&0x1) ? VERTICAL : HORIZONTAL;
 
     printf("PRG BANKS: %d\n", prgBanks);
     printf("CHR BANKS: %d\n", chrBanks);
@@ -76,6 +76,10 @@ Cartridge::Cartridge(const std::string& filename)
     if (mapperID == 0x00)
     {
         mapper = std::unique_ptr<Mapper>(new Mapper00(prgBanks, chrBanks));
+    }
+    else if (mapperID == 0x01)
+    {
+        mapper = std::unique_ptr<Mapper>(new Mapper01(prgBanks, chrBanks));
     }
     else if (mapperID == 0x03)
     {
@@ -87,7 +91,7 @@ Cartridge::Cartridge(const std::string& filename)
         return;
     }
 
-
+    mapper->reset();
 
     imageValid_ = true;
 }
@@ -106,10 +110,12 @@ bool Cartridge::cpuRead(uint16_t addr, uint8_t* data)
 {
     uint32_t mapped_addr = 0;
 
-    if (!mapper->cpuMapReadAddr(addr, &mapped_addr))
+    if (!mapper->cpuMapReadAddr(addr, &mapped_addr, (uint8_t*)data))
         return false;
 
-    *data = prg_rom[mapped_addr];
+    // That the mapper didn't get the appropriate data itself
+    if (mapped_addr != 0xFFFFFFFF)
+        *data = prg_rom[mapped_addr];
 
     return true;
 }
@@ -133,7 +139,9 @@ bool Cartridge::cpuWrite(uint16_t addr, uint8_t data)
     if (!mapper->cpuMapWriteAddr(addr, &mapped_addr, &data))
         return false;
 
-    prg_rom[mapped_addr] = data;
+    // That the mapper didn't write the data itself
+    if (mapped_addr != 0xFFFFFFFF)
+        prg_rom[mapped_addr] = data;
 
     return true;
 }
@@ -148,6 +156,18 @@ bool Cartridge::ppuWrite(uint16_t addr, uint8_t data)
     chr_rom[mapped_addr] = data;
 
     return true;
+}
+
+MIRROR Cartridge::mirror()
+{
+    MIRROR m = mapper->mirror();
+
+    if (m == MIRROR::HARDWARE)
+    {
+        return hw_mirror;
+    }
+
+    return m;
 }
 
 

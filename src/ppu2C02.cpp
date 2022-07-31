@@ -189,8 +189,7 @@ void ppu2C02::cpuWrite(uint16_t addr, uint8_t data)
     {
         // TODO
         //oam_addr = data;
-    }
-    else if (addr==0x4) // OAMDATA
+    }    else if (addr==0x4) // OAMDATA
     {
         // TODO
         //oam.bytes[oam_addr] = data;
