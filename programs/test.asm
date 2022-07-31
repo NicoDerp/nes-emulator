@@ -9,6 +9,13 @@
 RESET:
     sei
     cld
+
+    lda #$01
+    cmp #$00
+branch_label:
+    bne branch_label
+
+
     lda #$10
     sta $F0
     lda #$81

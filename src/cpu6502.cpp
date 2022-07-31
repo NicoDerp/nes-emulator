@@ -212,8 +212,8 @@ void cpu6502::reset()
     a = 0;
     x = 0;
     y = 0;
-    //stackptr = 0xFD;
-    stackptr = 0xFF;
+    stackptr = 0xFD;
+    //stackptr = 0xFF;
     status = 0x00 | U; // Everything is zero exept for the unused bit
 
     // Read where the program starts
