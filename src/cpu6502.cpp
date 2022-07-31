@@ -13,6 +13,12 @@ cpu6502::cpu6502()
      *
     ***/
 
+    // TODO: Implement some unoficcial opcodes
+    // NOP, LAX, SAX, DCP, RLA
+
+    // (https://www.nesdev.org/wiki/CPU_unofficial_opcodes)
+    // (https://www.nesdev.org/wiki/Programming_with_unofficial_opcodes)
+
     using a = cpu6502;
 	lookup =
 	{
