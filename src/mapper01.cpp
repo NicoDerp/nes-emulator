@@ -22,7 +22,7 @@ bool Mapper01::ppuMapReadAddr(uint16_t addr, uint32_t* mapped_addr)
     return false;
 }
 
-bool Mapper01::cpuMapWriteAddr(uint16_t addr, uint32_t* mapped_addr)
+bool Mapper01::cpuMapWriteAddr(uint16_t addr, uint32_t* mapped_addr, uint8_t* data)
 {
     return false;
 }

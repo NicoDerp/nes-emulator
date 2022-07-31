@@ -30,7 +30,7 @@ bool Mapper00::cpuMapReadAddr(uint16_t addr, uint32_t* mapped_addr)
      *
     ***/
 
-    if (prg_banks == 1)
+    if (prgBanks == 1)
     {
         *mapped_addr = addr & 0x3FFF; // addr % 16kb
     }
@@ -44,12 +44,12 @@ bool Mapper00::cpuMapReadAddr(uint16_t addr, uint32_t* mapped_addr)
      *
     ***/
 
-    else if (prg_banks == 2)
+    else if (prgBanks == 2)
     {
         *mapped_addr = addr & 0x7FFF;
     }
 
-    //    printf("BANKS: %d\nADDR: 0x%s\nMAPD: 0x%s\n\n", prg_banks, hex(addr,4).c_str(), hex(*mapped_addr,8).c_str());
+    //    printf("BANKS: %d\nADDR: 0x%s\nMAPD: 0x%s\n\n", prgBanks, hex(addr,4).c_str(), hex(*mapped_addr,8).c_str());
 
     return true;
 }
@@ -67,17 +67,17 @@ bool Mapper00::ppuMapReadAddr(uint16_t addr, uint32_t* mapped_addr)
     return true;
 }
 
-bool Mapper00::cpuMapWriteAddr(uint16_t addr, uint32_t* mapped_addr)
+bool Mapper00::cpuMapWriteAddr(uint16_t addr, uint32_t* mapped_addr, uint8_t* data)
 {
     if (!(0x8000 <= addr && addr <= 0xFFFF))
         return false;
 
     // The same as cpuMapReadAddr
-    if (prg_banks == 1)
+    if (prgBanks == 1)
     {
         *mapped_addr = addr & 0x3FFF;
     }
-    else if (prg_banks == 2)
+    else if (prgBanks == 2)
     {
         *mapped_addr = addr & 0x7FFF;
     }

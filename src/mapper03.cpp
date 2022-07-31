@@ -3,7 +3,7 @@
 
 Mapper03::Mapper03(uint8_t p, uint8_t c) : Mapper(p, c)
 {
-    cur_chr_bank = 0;
+    chrBankSelect = 0;
 }
 
 Mapper03::~Mapper03()
@@ -27,7 +27,7 @@ bool Mapper03::cpuMapReadAddr(uint16_t addr, uint32_t* mapped_addr)
      *
     ***/
 
-    if (prg_banks == 1)
+    if (prgBanks == 1)
     {
         *mapped_addr = addr & 0x3FFF; // addr % 16kb
     }
@@ -41,7 +41,7 @@ bool Mapper03::cpuMapReadAddr(uint16_t addr, uint32_t* mapped_addr)
      *
     ***/
 
-    else if (prg_banks == 2)
+    else if (prgBanks == 2)
     {
         *mapped_addr = addr & 0x7FFF;
     }
@@ -54,39 +54,27 @@ bool Mapper03::ppuMapReadAddr(uint16_t addr, uint32_t* mapped_addr)
     if (!(0x0000 <= addr && addr <= 0x1FFF))
         return false;
 
-    *mapped_addr = (cur_chr_bank & 0x03) * 8192 + addr;
+    *mapped_addr = (chrBankSelect & 0x03) * 8192 + addr;
 
     return true;
 }
 
-bool Mapper03::cpuMapWriteAddr(uint16_t addr, uint32_t* mapped_addr)
+bool Mapper03::cpuMapWriteAddr(uint16_t addr, uint32_t* mapped_addr, uint8_t* data)
 {
-    if (!(0x8000 <= addr && addr <= 0xFFFF))
-        return false;
+    //if (!(0x8000 <= addr && addr <= 0xFFFF))
+    //    return false;
 
-    if (addr == 0x8000)
+    if (0x8000 <= addr && addr <= 0xFFFF)
     {
-        //cur_chrBank = 
-        return false;
-    }
-    else if (prg_banks == 1)
-    {
-        *mapped_addr = addr & 0x3FFF;
-    }
-    else if (prg_banks == 2)
-    {
-        *mapped_addr = addr & 0x7FFF;
+        chrBankSelect = *data & 0x03;
+        *mapped_addr = addr;
     }
 
-    return true;
+    // Even though mapper did some stuff it does not update the roms
+    return false;
 }
 
 bool Mapper03::ppuMapWriteAddr(uint16_t addr, uint32_t* mapped_addr)
 {
-    if (!(0x0000 <= addr && addr <= 0x1FFF))
-        return false;
-
-    *mapped_addr = (cur_chr_bank & 0x03) * 8192 + addr;
-
-    return true;
+    return false;
 }

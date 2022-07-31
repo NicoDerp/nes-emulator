@@ -9,6 +9,7 @@
 #include <memory>
 
 #include "mapper00.h"
+#include "mapper03.h"
 
 class Cartridge
 {

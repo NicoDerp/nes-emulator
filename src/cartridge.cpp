@@ -74,7 +74,13 @@ Cartridge::Cartridge(const std::string& filename)
     printf("MAPPER ID: 0x%s\n", hex(mapperID,2).c_str());
 
     if (mapperID == 0x00)
+    {
         mapper = std::unique_ptr<Mapper>(new Mapper00(prgBanks, chrBanks));
+    }
+    else if (mapperID == 0x03)
+    {
+        mapper = std::unique_ptr<Mapper>(new Mapper03(prgBanks, chrBanks));
+    }
     else
     {
         printf("[ERROR] Unknown mapper 0x%s. Probably coming soon...\n", hex(mapperID,2).c_str());
@@ -124,7 +130,7 @@ bool Cartridge::cpuWrite(uint16_t addr, uint8_t data)
 {
     uint32_t mapped_addr = 0;
 
-    if (!mapper->cpuMapWriteAddr(addr, &mapped_addr))
+    if (!mapper->cpuMapWriteAddr(addr, &mapped_addr, &data))
         return false;
 
     prg_rom[mapped_addr] = data;
