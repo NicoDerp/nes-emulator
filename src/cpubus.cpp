@@ -73,17 +73,16 @@ void CPUBus::clock()
 {
     ppu.clock();
 
-    if (++systemClockCount == 3)
-    {
-        cpu.clock();
-        systemClockCount = 0;
-    }
-
-
     if (ppu.nmi)
     {
         ppu.nmi = false;
         cpu.nmi();
+    }
+
+    if (++systemClockCount == 3)
+    {
+        cpu.clock();
+        systemClockCount = 0;
     }
 }
 

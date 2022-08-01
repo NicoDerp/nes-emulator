@@ -173,7 +173,16 @@ void ppu2C02::cpuWrite(uint16_t addr, uint8_t data)
 
     if (addr==0x0) // PPUCTRL
     {
+        bool vblank_nmi = control.vblank_nmi;
         control.reg = data;
+
+        // If nmi on vblank is activated in the middle of vblank
+        // then immediately nmi
+        if (!vblank_nmi && control.vblank_nmi && status.vblank)
+        {
+            nmi = true;
+        }
+
         tram_addr.nametable_x = control.nametable_x;
         tram_addr.nametable_y = control.nametable_y;
     }
@@ -189,7 +198,8 @@ void ppu2C02::cpuWrite(uint16_t addr, uint8_t data)
     {
         // TODO
         //oam_addr = data;
-    }    else if (addr==0x4) // OAMDATA
+    }
+    else if (addr==0x4) // OAMDATA
     {
         // TODO
         //oam.bytes[oam_addr] = data;
@@ -263,17 +273,6 @@ void ppu2C02::clock()
         {
             // Odd-frame skipped
             cycle = 1;
-        }
-
-        // Pre-render line!
-        if (scanline == -1)
-        {
-            // Clear VBLANK
-            if (cycle == 1)
-            {
-                //printf("NOT VBALNK\n");
-                status.vblank = false;
-            }
         }
 
         // Fetch next tile info (not cycle==0, idle)
@@ -402,14 +401,28 @@ void ppu2C02::clock()
 
     }
 
-    // vert(v) = vert(t)
-    if ((scanline == -1) && (280 <= cycle && cycle <= 304))
+    // Pre-render line!
+    if (scanline == -1)
     {
-        if (mask.render_bgr || mask.render_spr)
+        // vert(v) = vert(t)
+        if (280 <= cycle && cycle <= 304)
         {
-            vram_addr.fine_y = tram_addr.fine_y;
-            vram_addr.coarse_y = tram_addr.coarse_y;
-            vram_addr.nametable_y = tram_addr.nametable_y;
+            if (mask.render_bgr || mask.render_spr)
+            {
+                vram_addr.fine_y = tram_addr.fine_y;
+                vram_addr.coarse_y = tram_addr.coarse_y;
+                vram_addr.nametable_y = tram_addr.nametable_y;
+            }
+        }
+    }
+
+    if (scanline == -1)
+    {
+        // Clear VBLANK
+        if (cycle == 1)
+        {
+            printf("\n\n\n\nNOT VBALNK\n\n\n\n");
+            status.vblank = false;
         }
     }
 
