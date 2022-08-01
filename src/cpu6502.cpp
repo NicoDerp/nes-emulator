@@ -398,7 +398,7 @@ uint8_t cpu6502::ZP0()
     addr_abs = read(pc);
     pc++;
 
-    // addr_abs &= 0x00FF ??? unnecessary
+    //addr_abs &= 0x00FF; //??? unnecessary
 
     return 0;
 }
@@ -505,10 +505,12 @@ uint8_t cpu6502::ASL()
     setFlag(Z, tmp==0x00); // Set the zero flag
     setFlag(C, fetched&0x80); // Set carry to leftmost bit
     setFlag(N, tmp&0x80); // Set the negative bit
+
     if (lookup[opcode].addrmode == &cpu6502::ACC)
         a = tmp;
     else
         write(addr_abs, tmp);
+
     return 0;
 }
 
@@ -1009,7 +1011,7 @@ uint8_t cpu6502::SBC()
     }
     else
     {
-        uint16_t tmp = a-fetched+getFlag(C);
+        uint16_t tmp = a-fetched + getFlag(C) - 1;
         a = tmp&0x00FF;
         setFlag(V, (a&0x80==fetched&0x80)&(a&0x80!=tmp&0x80));
         setFlag(C, a+getFlag(C)>=fetched);
