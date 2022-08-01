@@ -199,6 +199,8 @@ void cpu6502::clock()
         //printf("Emulating '%s' [%d]\n", lookup[opcode].name.c_str(), opcode);
         //printf("Cycles %d\n", cycles);
 
+        setFlag(U, 1);
+
         bool c1 = (this->*lookup[opcode].addrmode)();
 
         bool c2 = (this->*lookup[opcode].operation)();
@@ -479,7 +481,7 @@ uint8_t cpu6502::ADC()
     }
     else
     {
-        uint16_t tmp = a+fetched+getFlag(C);
+        uint16_t tmp = a + fetched + getFlag(C);
         setFlag(V, (a&0x80==fetched&0x80)&(a&0x80!=tmp&0x80));
         setFlag(Z, a==0);
         setFlag(C, tmp>0xFF);
@@ -597,7 +599,6 @@ uint8_t cpu6502::BNE()
         pc = addr_abs;
     }
     return 0;
-
 }
 
 uint8_t cpu6502::BPL()

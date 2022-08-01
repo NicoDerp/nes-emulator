@@ -89,7 +89,7 @@ public:
     bool OnUserCreate() override
     {
         // Load the cartridge
-        cart = std::make_shared<Cartridge>("test_roms/blargg_ppu/vbl_clear_time.nes");
+        cart = std::make_shared<Cartridge>("test_roms/cpu_timing_test6/cpu_timing_test.nes");
 
         // Check if the image is valid
         if (!cart->imageValid())

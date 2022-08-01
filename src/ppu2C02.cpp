@@ -154,7 +154,9 @@ uint8_t ppu2C02::cpuRead(uint16_t addr, bool rdonly)
 
             // PPUDATA read is delayed except for reading palettes
             if (vram_addr.reg >= 0x3F00)
+            {
                 data = ppu_data_buffer;
+            }
 
             vram_addr.reg += (control.increment_mode ? 32 : 1); // im*31+1
         }
@@ -164,6 +166,7 @@ uint8_t ppu2C02::cpuRead(uint16_t addr, bool rdonly)
         // Can't get here, but I don't trust myself enough :o
         printf("[WARNING] Unreachable location in ppu2C02::cpuRead reached %d. Bug in mirroring\n",addr);
     }
+
     return data;
 }
 
@@ -390,8 +393,8 @@ void ppu2C02::clock()
     {
         if (mask.render_bgr || mask.render_spr)
         {
-            vram_addr.coarse_x = tram_addr.coarse_x;
             vram_addr.nametable_x = tram_addr.nametable_x;
+            vram_addr.coarse_x = tram_addr.coarse_x;
         }
 
         bg_shifter_pat_low = (bg_shifter_pat_low & 0xFF00) | bg_next_lsb;

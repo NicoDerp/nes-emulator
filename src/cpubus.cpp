@@ -73,16 +73,18 @@ void CPUBus::clock()
 {
     ppu.clock();
 
-    if (ppu.nmi)
-    {
-        ppu.nmi = false;
-        cpu.nmi();
-    }
-
     if (++systemClockCount == 3)
     {
         cpu.clock();
         systemClockCount = 0;
+    }
+
+    // (ppu.nmi && cpu.complete()) ?? because an nmi should happen after the current
+    // instruction is complete
+    if (ppu.nmi && cpu.complete())
+    {
+        ppu.nmi = false;
+        cpu.nmi();
     }
 }
 
