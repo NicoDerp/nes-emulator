@@ -142,6 +142,133 @@ std::map<uint16_t, std::string> cpu6502::disassemble(uint16_t start, uint16_t en
     return map;
 }
 
+#ifdef LOGMODE
+std::string cpu6502::disassembleLine()
+{
+    uint8_t low;
+    uint8_t high;
+    std::string tmp = "";
+
+    uint16_t addr = pc;
+
+    opcode = read(addr++,true);
+
+    // lookup[opcode].name
+    std::string f = hex(addr-1,4);
+
+    std::string b = hex(opcode,2);
+
+    std::string c = lookup[opcode].name;
+
+    // Operand name
+    uint8_t len = 3;
+
+    if (lookup[opcode].addrmode == &cpu6502::IMP)
+    {
+
+    }
+    else if (lookup[opcode].addrmode == &cpu6502::ACC)
+    {
+
+    }
+    else if (lookup[opcode].addrmode == &cpu6502::IMM)
+    {
+        tmp = hex(read(addr++, true),2);
+        b += " " + tmp;
+        c += " #$" + tmp;
+    }
+    else if (lookup[opcode].addrmode == &cpu6502::REL)
+    {
+        uint8_t offset = read(addr++,true);
+        b += " " + hex(offset,2);
+        c += " $"+hex(addr+(int8_t)offset,4);
+    }
+    else if (lookup[opcode].addrmode == &cpu6502::IND)
+    {
+        low = read(addr++,true);
+        high = read(addr++,true);
+        b += " " + hex(low,2) + " " + hex(high,2);
+        c += " $("+hex((high<<8)|low,4)+")";
+    }
+    else if (lookup[opcode].addrmode == &cpu6502::ABS)
+    {
+        low = read(addr++,true);
+        high = read(addr++,true);
+        b += " " + hex(low,2) + " " + hex(high,2);
+        c += " $"+hex((high<<8)|low,4);
+    }
+    else if (lookup[opcode].addrmode == &cpu6502::ABX)
+    {
+        low = read(addr++,true);
+        high = read(addr++,true);
+        b += " " + hex(low,2) + " " + hex(high,2);
+        c += " $"+hex((high<<8)|low,4)+",X";
+    }
+    else if (lookup[opcode].addrmode == &cpu6502::ABY)
+    {
+        low = read(addr++,true);
+        high = read(addr++,true);
+        b += " " + hex(low,2) + " " + hex(high,2);
+        c += " $"+hex((high<<8)|low,4)+",Y";
+    }
+    else if (lookup[opcode].addrmode == &cpu6502::ZP0)
+    {
+        tmp = hex(read(addr++,true),2);
+        b += " " + tmp;
+        c += " $" + tmp;
+    }
+    else if (lookup[opcode].addrmode == &cpu6502::ZPX)
+    {
+        tmp = hex(read(addr++,true),2);
+        b += " " + tmp;
+        c += " $"+tmp+",X";
+    }
+    else if (lookup[opcode].addrmode == &cpu6502::ZPY)
+    {
+        tmp = hex(read(addr++,true),2);
+        b += " " + tmp;
+        c += " $"+tmp+",Y";
+    }
+    else if (lookup[opcode].addrmode == &cpu6502::IZX)
+    {
+        tmp = hex(read(addr++,true),2);
+        b += " " + tmp;
+        c += " ($"+tmp+",X)";
+    }
+    else if (lookup[opcode].addrmode == &cpu6502::IZY)
+    {
+        tmp = hex(read(addr++,true),2);
+        b += " " + tmp;
+        c += " ($"+tmp+",Y)";
+    }
+    else
+    {
+        // XXX
+    }
+
+    std::string s = f + "  " + b;
+
+    for (int i=b.length();i<10;i++)
+    {
+        s += " ";
+    }
+
+    s += c;
+
+    for (int i=c.length();i<32;i++)
+    {
+        s += " ";
+    }
+
+    s += "A:"+hex(a,2)+" X:"+hex(x,2)+" Y:"+hex(y,2)+" P:"+hex(status,2)+" SP:"+hex(stackptr,2);
+    s += "\n";
+
+    return s;
+}
+
+#endif
+
+
 bool cpu6502::getFlag(FLAGS6502 flag)
 {
     return (bool)(status & flag);
@@ -190,6 +317,11 @@ void cpu6502::clock()
     // No more cycles left for operation so fetch next one
     if (cycles == 0)
     {
+
+#ifdef LOGMODE
+        uint16_t logpc = pc;
+#endif
+
         // Read opcode and increment program counter
         opcode = read(pc);
         pc++;
@@ -209,6 +341,21 @@ void cpu6502::clock()
             cycles++;
 
         setFlag(U, 1);
+
+#ifdef LOGMODE
+        if (logfile == nullptr)
+        {
+            logfile = fopen("nestest.log", "wt");
+        }
+
+        if (logfile != nullptr)
+        {
+            std::string s = disassembleLine();
+            fprintf(logfile, s.c_str());
+        }
+
+#endif
+
     }
     // One cycle has passed
     cycles--;

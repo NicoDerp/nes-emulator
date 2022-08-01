@@ -8,6 +8,8 @@
 #include <string>
 #include <map>
 
+#define LOGMODE
+
 // Forward declaration
 class Bus;
 
@@ -25,7 +27,11 @@ public:
     void irq();
 
     bool complete() { return cycles == 0; }
-    std::map<uint16_t, std::string> disassemble(uint16_t start, uint16_t end);
+    std::map<uint16_t, std::string> disassemble(uint16_t start, uint16_t end);\
+
+#ifdef LOGMODE
+    std::string disassembleLine();
+#endif
 
 public:
     enum FLAGS6502
@@ -134,6 +140,12 @@ private:
  	uint8_t TSX(); 	uint8_t TXA(); 	uint8_t TXS(); 	uint8_t TYA();
 
     uint8_t XXX();
+
+#ifdef LOGMODE
+private:
+    FILE* logfile = nullptr;
+#endif
+
 };
 
 //#endif /* INCLUDE_CPU6502_H */
