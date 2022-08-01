@@ -30,7 +30,7 @@ public:
     std::map<uint16_t, std::string> disassemble(uint16_t start, uint16_t end);\
 
 #ifdef LOGMODE
-    std::string disassembleLine();
+    std::string disassembleLine(uint16_t line);
 #endif
 
 public:

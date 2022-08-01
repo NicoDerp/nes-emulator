@@ -143,13 +143,13 @@ std::map<uint16_t, std::string> cpu6502::disassemble(uint16_t start, uint16_t en
 }
 
 #ifdef LOGMODE
-std::string cpu6502::disassembleLine()
+std::string cpu6502::disassembleLine(uint16_t line)
 {
     uint8_t low;
     uint8_t high;
     std::string tmp = "";
 
-    uint16_t addr = pc;
+    uint16_t addr = line;
 
     opcode = read(addr++,true);
 
@@ -319,7 +319,18 @@ void cpu6502::clock()
     {
 
 #ifdef LOGMODE
-        uint16_t logpc = pc;
+
+        if (logfile == nullptr)
+        {
+            logfile = fopen("nestest.log", "wt");
+        }
+
+        if (logfile != nullptr)
+        {
+            std::string s = disassembleLine(pc);
+            fprintf(logfile, s.c_str());
+        }
+
 #endif
 
         // Read opcode and increment program counter
@@ -342,20 +353,6 @@ void cpu6502::clock()
 
         setFlag(U, 1);
 
-#ifdef LOGMODE
-        if (logfile == nullptr)
-        {
-            logfile = fopen("nestest.log", "wt");
-        }
-
-        if (logfile != nullptr)
-        {
-            std::string s = disassembleLine();
-            fprintf(logfile, s.c_str());
-        }
-
-#endif
-
     }
     // One cycle has passed
     cycles--;
@@ -367,9 +364,15 @@ void cpu6502::reset()
     a = 0;
     x = 0;
     y = 0;
+
     stackptr = 0xFD;
-    //stackptr = 0xFF;
-    status = 0x00 | U; // Everything is zero exept for the unused bit
+
+    // Everything is zero exept for the break, unused bit and interrupt disable
+    // nestest differs so change back
+    // status = 0x00 | B | U | I;
+    status = 0x00 | U | I;
+
+    printf("STAUS: %s\n", hex(status,2).c_str());
 
     // Read where the program starts
     uint8_t low = read(0xFFFC);
