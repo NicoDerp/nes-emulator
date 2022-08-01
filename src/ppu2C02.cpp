@@ -421,7 +421,7 @@ void ppu2C02::clock()
         // Clear VBLANK
         if (cycle == 1)
         {
-            printf("\n\n\n\nNOT VBALNK\n\n\n\n");
+            //printf("NOT VBALNK\n");
             status.vblank = false;
         }
     }
