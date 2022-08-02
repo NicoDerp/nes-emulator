@@ -73,6 +73,7 @@ bool Mapper01::ppuMapReadAddr(uint16_t addr, uint32_t* mapped_addr)
     if (chrBanks == 0)
     {
         // Ram
+        *mapped_addr = addr;
     }
     else
     {

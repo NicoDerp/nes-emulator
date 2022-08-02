@@ -7,7 +7,8 @@ enum MIRROR
 {
     HARDWARE,
     HORIZONTAL,
-    VERTICAL
+    VERTICAL,
+    FOUR_SCREEN
 };
 
 

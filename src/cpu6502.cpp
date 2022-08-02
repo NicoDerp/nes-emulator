@@ -35,7 +35,7 @@ cpu6502::cpu6502()
 		{ "CPY", &a::CPY, &a::IMM, 2 },{ "CMP", &a::CMP, &a::IZX, 6 },{"*NOP", &a::NOP, &a::IMM, 2 },{"*DCP", &a::DCP, &a::IZX, 8 },{ "CPY", &a::CPY, &a::ZP0, 3 },{ "CMP", &a::CMP, &a::ZP0, 3 },{ "DEC", &a::DEC, &a::ZP0, 5 },{"*DCP", &a::DCP, &a::ZP0, 5 },{ "INY", &a::INY, &a::IMP, 2 },{ "CMP", &a::CMP, &a::IMM, 2 },{ "DEX", &a::DEX, &a::IMP, 2 },{"*AXS", &a::AXS, &a::IMM, 2 },{ "CPY", &a::CPY, &a::ABS, 4 },{ "CMP", &a::CMP, &a::ABS, 4 },{ "DEC", &a::DEC, &a::ABS, 6 },{"*DCP", &a::DCP, &a::ABS, 6 },
 		{ "BNE", &a::BNE, &a::REL, 2 },{ "CMP", &a::CMP, &a::IZY, 5 },{ "???", &a::XXX, &a::IMP, 2 },{"*DCP", &a::DCP, &a::IZY, 8 },{"*NOP", &a::NOP, &a::ZPX, 4 },{ "CMP", &a::CMP, &a::ZPX, 4 },{ "DEC", &a::DEC, &a::ZPX, 6 },{"*DCP", &a::DCP, &a::ZPX, 6 },{ "CLD", &a::CLD, &a::IMP, 2 },{ "CMP", &a::CMP, &a::ABY, 4 },{ "NOP", &a::NOP, &a::IMP, 2 },{"*DCP", &a::DCP, &a::ABY, 7 },{"*NOP", &a::NOP, &a::ABX, 4 },{ "CMP", &a::CMP, &a::ABX, 4 },{ "DEC", &a::DEC, &a::ABX, 7 },{"*DCP", &a::DCP, &a::ABX, 7 },
 		{ "CPX", &a::CPX, &a::IMM, 2 },{ "SBC", &a::SBC, &a::IZX, 6 },{"*NOP", &a::NOP, &a::IMM, 2 },{"*ISC", &a::ISC, &a::IZX, 8 },{ "CPX", &a::CPX, &a::ZP0, 3 },{ "SBC", &a::SBC, &a::ZP0, 3 },{ "INC", &a::INC, &a::ZP0, 5 },{"*ISC", &a::ISC, &a::ZP0, 5 },{ "INX", &a::INX, &a::IMP, 2 },{ "SBC", &a::SBC, &a::IMM, 2 },{ "NOP", &a::NOP, &a::IMP, 2 },{"*SBC", &a::SBC, &a::IMM, 2 },{ "CPX", &a::CPX, &a::ABS, 4 },{ "SBC", &a::SBC, &a::ABS, 4 },{ "INC", &a::INC, &a::ABS, 6 },{"*ISC", &a::ISC, &a::ABS, 6 },
-		{ "BEQ", &a::BEQ, &a::REL, 2 },{ "SBC", &a::SBC, &a::IZY, 5 },{ "???", &a::XXX, &a::IMP, 2 },{"*ISC", &a::ISC, &a::IZY, 8 },{"*NOP", &a::NOP, &a::ZPX, 4 },{ "SBC", &a::SBC, &a::ZPX, 4 },{ "INC", &a::INC, &a::ZPX, 6 },{"*ISC", &a::ISC, &a::ZPX, 6 },{ "SED", &a::SED, &a::IMP, 2 },{ "SBC", &a::SBC, &a::ABY, 4 },{ "NOP", &a::NOP, &a::IMP, 2 },{"*ISC", &a::ISC, &a::ABY, 7 },{"*NOP", &a::NOP, &a::ABX, 4 },{ "SBC", &a::SBC, &a::ABX, 4 },{ "INC", &a::INC, &a::ABX, 7 },{"*ISC", &a::OSC, &a::ABX, 7 },
+		{ "BEQ", &a::BEQ, &a::REL, 2 },{ "SBC", &a::SBC, &a::IZY, 5 },{ "???", &a::XXX, &a::IMP, 2 },{"*ISC", &a::ISC, &a::IZY, 8 },{"*NOP", &a::NOP, &a::ZPX, 4 },{ "SBC", &a::SBC, &a::ZPX, 4 },{ "INC", &a::INC, &a::ZPX, 6 },{"*ISC", &a::ISC, &a::ZPX, 6 },{ "SED", &a::SED, &a::IMP, 2 },{ "SBC", &a::SBC, &a::ABY, 4 },{ "NOP", &a::NOP, &a::IMP, 2 },{"*ISC", &a::ISC, &a::ABY, 7 },{"*NOP", &a::NOP, &a::ABX, 4 },{ "SBC", &a::SBC, &a::ABX, 4 },{ "INC", &a::INC, &a::ABX, 7 },{"*ISC", &a::ISC, &a::ABX, 7 },
 	};
 }
 
@@ -975,55 +975,40 @@ uint8_t cpu6502::LSR()
 
 uint8_t cpu6502::NOP()
 {
-    /** Holy Shit
-     *
-     * (https://www.nesdev.org/wiki/CPU_unofficial_opcodes)
-     *
-     * All official and unofficial NOPs.
-     *
-    ***/
+    // The amount of bytes of the NOP is instead in definition.
 
-    switch (opcode)
-    {
-    case 0x1C:
-    case 0x3C:
-    case 0x5C:
-    case 0x7C:
-    case 0xDC:
-    case 0xFC:
-
-    case 0x1A:
-    case 0x3A:
-    case 0x5A:
-    case 0x7A:
-    case 0xDA:
-    case 0xFA:
-
-    case 0x14:
-    case 0x34:
-    case 0x54:
-    case 0x74:
-    case 0xD4:
-    case 0xF4:
-
-    case 0x0C:
-
-        //    case 0xEA: The official one
-
-    case 0x89:
-
-    case 0x04:
-    case 0x44:
-    case 0x64:
-
-    case 0x82:
-    case 0xC2:
-    case 0xE2:
-
-    case 0x80:
-        return 1;
-        break;
-    }
+    //switch (opcode)
+    //{
+    //case 0x1C:
+    //case 0x3C:
+    //case 0x5C:
+    //case 0x7C:
+    //case 0xDC:
+    //case 0xFC:
+    //case 0x1A:
+    //case 0x3A:
+    //case 0x5A:
+    //case 0x7A:
+    //case 0xDA:
+    //case 0xFA:
+    //case 0x14:
+    //case 0x34:
+    //case 0x54:
+    //case 0x74:
+    //case 0xD4:
+    //case 0xF4:
+    //case 0x0C:
+    //case 0x89:
+    //case 0x04
+    //case 0x44:
+    //case 0x64:
+    //case 0x82:
+    //case 0xC2:
+    //case 0xE2:
+    //case 0x80:
+    //    return 0;
+    //    break;
+    //}
     return 0;
 }
 
@@ -1097,7 +1082,7 @@ uint8_t cpu6502::ROR()
 }
 
 uint8_t cpu6502::RTI()
-{††
+{
     status = pop();
     setFlag(B, 0);
     setFlag(U, 1);

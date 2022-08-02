@@ -89,7 +89,7 @@ public:
     bool OnUserCreate() override
     {
         // Load the cartridge
-        cart = std::make_shared<Cartridge>("test_roms/nestest.nes");
+        cart = std::make_shared<Cartridge>("test_roms/mmc3_test_2/rom_singles/1-clocking.nes");
 
         // Check if the image is valid
         if (!cart->imageValid())
@@ -108,7 +108,7 @@ public:
         nes.reset();
 
         // For debug
-        nes.cpu.pc = 0xC000;
+        //nes.cpu.pc = 0xC000;
 
         return true;
     }
@@ -213,10 +213,10 @@ public:
         DrawCpu(520, 2);
         DrawCode(520, 200, 26);
 
-        //DrawPage(2, 2, 0x00);
+        DrawPage(2, 2, 0x00);
         //DrawPage(2, 182, 0x80);
 
-        //DrawStack(300, 200, 10); // 2, 20
+        DrawStack(300, 200, 10); // 2, 20
 
         DrawSprite(516, 348, &nes.ppu.updatePaletteSprite(0, selectedPalette));
         DrawSprite(648, 348, &nes.ppu.updatePaletteSprite(1, selectedPalette));
