@@ -13,9 +13,6 @@ cpu6502::cpu6502()
      *
     ***/
 
-    // TODO: Implement some unoficcial opcodes
-    // NOP, LAX, SAX, DCP, RLA
-
     // (https://www.nesdev.org/wiki/CPU_unofficial_opcodes)
     // (https://www.nesdev.org/wiki/Programming_with_unofficial_opcodes)
 
@@ -1100,7 +1097,7 @@ uint8_t cpu6502::ROR()
 }
 
 uint8_t cpu6502::RTI()
-{
+{††
     status = pop();
     setFlag(B, 0);
     setFlag(U, 1);
@@ -1259,36 +1256,257 @@ uint8_t cpu6502::TYA()
 
 uint8_t cpu6502::LAX()
 {
-    return 0;
+    a = fetch();
+    x = a;
+
+    setFlag(N, a&0x80);
+    setFlag(Z, a==0);
+
+    return 1;
 }
 
 uint8_t cpu6502::SAX()
 {
+    write(addr_abs, a&x);
+
     return 0;
 }
 
 uint8_t cpu6502::DCP()
 {
+    fetch();
+
+    uint8_t tmp = fetched-1;
+
+    setFlag(N, tmp&0x80);
+    setFlag(Z, tmp==0);
+    write(addr_abs, tmp);
+
+    setFlag(Z, a==tmp);
+    setFlag(N, (a-tmp)&0x80);
+    setFlag(C, tmp <= a);
+
     return 0;
 }
 
 uint8_t cpu6502::RLA()
 {
+    fetch();
+
+    uint8_t tmp = fetched << 1;
+    tmp |= getFlag(C); // Set LSB to C
+    setFlag(N, fetched&0x40);
+    //setFlag(Z, tmp==0);
+    //setFlag(C, fetched&0x80);
+
+    write(addr_abs, tmp);
+
+    a &= tmp;
+    setFlag(Z, a==0x00); // Set the zero flag
+    setFlag(N, a&0x80); // Set the negative flag
+
     return 0;
 }
 
 uint8_t cpu6502::RRA()
 {
+    fetch();
+
+    uint8_t tmp1 = fetched >> 1;
+    tmp1 |= (getFlag(C)<<7); // Set MSB to C
+    setFlag(N, getFlag(C));
+    setFlag(Z, tmp1==0);
+    setFlag(C, fetched&0x01);
+
+    write(addr_abs, tmp1);
+
+    fetched = tmp1;
+
+    if (getFlag(D))
+    {
+        uint8_t one = (a&0x0F)+(fetched&0x0F)+getFlag(C);
+        uint8_t ten = (a>>4)+(fetched>>4);
+        if (one>9)
+        {
+            ten++;
+            one-=10;
+        }
+        // buruuh wtf idkam
+        setFlag(V, ten&0x08);
+        setFlag(C, ten>9);
+        if (ten>9)
+            ten-=10;
+        a = (ten*16)+one;
+    }
+    else
+    {
+        uint16_t tmp = a + fetched + getFlag(C);
+        setFlag(V, (a&0x80==fetched&0x80)&(a&0x80!=tmp&0x80));
+        setFlag(Z, a==0);
+        setFlag(C, tmp>0xFF);
+        setFlag(N, a&0x80);
+        a = tmp&0x00FF;
+    }
+
+
     return 0;
 }
 
 uint8_t cpu6502::SLO()
 {
+    fetch();
+    uint8_t tmp = fetched << 1;
+    //setFlag(Z, tmp==0x00); // Set the zero flag
+    setFlag(C, fetched&0x80); // Set carry to leftmost bit
+    //setFlag(N, tmp&0x80); // Set the negative bit
+
+    write(addr_abs, tmp);
+
+    a |= tmp;
+    setFlag(N, a&0x80);
+    setFlag(Z, a==0);
+
     return 0;
 }
 
 uint8_t cpu6502::SRE()
 {
+    fetch();
+    uint8_t tmp = fetched >> 1;
+    //setFlag(N, 0);
+    //setFlag(Z, tmp==0);
+    setFlag(C, fetched&0x01);
+
+    write(addr_abs, tmp);
+
+    a ^= tmp;
+    setFlag(N, a&0x80);
+    setFlag(Z, a==0);
+
+
+    return 0;
+}
+
+uint8_t cpu6502::ALR()
+{
+    fetch();
+    a &= fetched;
+    //setFlag(Z, a==0x00); // Set the zero flag
+    //setFlag(N, a&0x80); // Set the negative flag
+
+    uint8_t tmp = fetched >> 1;
+    setFlag(N, 0);
+    setFlag(Z, tmp==0);
+    setFlag(C, fetched&0x01);
+
+    a = tmp;
+
+    return 0;
+}
+
+uint8_t cpu6502::ARR()
+{
+    fetch();
+    a &= fetched;
+    //setFlag(Z, a==0x00); // Set the zero flag
+    //setFlag(N, a&0x80); // Set the negative flag
+
+    uint8_t tmp = fetched >> 1;
+    tmp |= (getFlag(C)<<7); // Set MSB to C
+    setFlag(N, getFlag(C));
+    setFlag(Z, tmp==0);
+    setFlag(C, tmp&(1<<6));
+    setFlag(V, (tmp&(1<<6)) ^ (tmp&(1<<5)));
+
+    a = tmp;
+
+    return 0;
+}
+
+uint8_t cpu6502::LAS()
+{
+    a = fetch();
+
+    //setFlag(N, a&0x80);
+    //setFlag(Z, a==0);
+
+    x = stackptr;
+    setFlag(N, x&0x80);
+    setFlag(Z, x==0);
+
+    return 1;
+}
+
+uint8_t cpu6502::AXS()
+{
+    fetch();
+    x = ((a & x) - fetched); // TODO: without borrow??
+
+    // TODO: should be x or a?
+    setFlag(Z, a==0);
+    setFlag(N, (a-fetched)&0x80);
+    setFlag(C, fetched <= a);
+
+    return 0;
+}
+
+uint8_t cpu6502::ISC()
+{
+    fetch();
+    fetched += 1;
+
+    setFlag(N, fetched&0x80);
+    setFlag(Z, fetched==0);
+    write(addr_abs, fetched);
+
+    if (getFlag(D))
+    {
+        uint8_t one;
+        uint8_t ten;
+        bool borrow = false;
+        if (a&0x0F+getFlag(C)<fetched&0x0F)
+        {
+            borrow = true;
+            one = 9+(a&0x0F)-(fetched&0x0F)+getFlag(C);
+        }
+        else
+        {
+            one = (a&0x0F)-(fetched&0x0F)-getFlag(C)+1;
+        }
+
+        if ((a>>4)<(fetched>>4))
+        {
+            ten = 10+(a>>4)-(fetched>>4);
+            setFlag(C, 1);
+        }
+        else
+        {
+            ten = (a>>4)-(fetched>>4);
+            setFlag(C, 0);
+        }
+
+        if (borrow)
+        {
+            if (ten==0)
+                ten = 9;
+            else
+                ten--;
+        }
+
+        // No N, V and Z update
+        a = (ten*16)+one;
+    }
+    else
+    {
+        uint16_t tmp = a-fetched + getFlag(C) - 1;
+        a = tmp&0x00FF;
+        setFlag(V, (a&0x80==fetched&0x80)&(a&0x80!=tmp&0x80));
+        setFlag(C, a+getFlag(C)>=fetched);
+        setFlag(N, a&0x80);
+        setFlag(Z, a==0);
+    }
+
+
     return 0;
 }
 
